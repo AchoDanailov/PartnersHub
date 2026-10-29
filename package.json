@@ -1,0 +1,13 @@
+{
+  "name": "partners-hub",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix web run dev",
+    "build": "npm --prefix web run build",
+    "lint": "npm --prefix web run lint"
+  },
+  "devDependencies": {
+    "supabase": "2.122.0"
+  }
+}

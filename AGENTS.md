@@ -2,10 +2,13 @@
 
 Partners Hub is a local-first React and Supabase platform where our business partners and their staff members can validate and consume voucher redemption codes. Clients arrive at service-specific pages through QR codes; these pages will later include tailored marketing images and scripts alongside the voucher interactions.
 
+In the data model, each partner business is an **organization** (`public.organizations`); its users are `organization_members` with an `organization_role` of `admin` or `staff`. Use "organization" in schema, code, and docs; "partner" refers only to the business relationship and the product name.
+
 ## Project layout
 
 - `web/`: self-contained Vite frontend with its own dependencies and lockfile; it can be used as the hosting project root. Generated database types live in `web/src/types/database.ts`.
 - `supabase/`: local Supabase configuration, database migrations, pgTAP tests, and Edge Functions. Edge Functions and their Deno tests live under `supabase/functions/`.
+- `docs/`: project documentation, including the Mermaid schema diagram in `docs/ERD.md`; keep it in sync with migrations.
 - Root `package.json`: pinned Supabase CLI and shared development commands.
 
 ## Commands

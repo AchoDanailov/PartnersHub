@@ -20,7 +20,7 @@ Partners Hub automates the partner's side of this process. Partners and their st
 ## Features
 
 - **Redemption code consumption (MVP):** validate a customer's code and redeem it. Each code can be used only once.
-- **Partner and staff access:** partner admins and their staff sign in and see only their own partner's data.
+- **Organization and staff access:** organization admins and their staff sign in and see only their own organization's data.
 - **Voucher statistics per service:** how many vouchers we have sold for each service and how many have been redeemed.
 - **FAQs:** per-service answers to questions customers commonly ask our partners.
 - **Service landing pages:** a page for each service with tailored marketing images and scripts.

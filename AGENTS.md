@@ -46,11 +46,7 @@ Local Studio is available at `http://127.0.0.1:54323` while the Supabase stack i
 
 ## CI
 
-GitHub Actions run on pull requests and pushes to `main` when relevant paths change:
-
-- `.github/workflows/database.yml`: installs the pinned Supabase CLI with `npm ci`, runs `supabase start` (applies all migrations), `supabase test db`, and `supabase db advisors --local --fail-on error`.
-- `.github/workflows/edge-functions.yml`: the `unit` job sets up Deno 2 and runs `deno install`, `deno task check`, and `deno task test` in every `supabase/functions/<name>/` that has a `deno.json` (directories starting with `_` are skipped). The `integration` job then starts the stack, runs `supabase functions serve`, waits for each function to boot, and runs `deno task test:integration` in functions that define it. Integration tests get `SUPABASE_URL`, `SUPABASE_FUNCTIONS_URL`, `SUPABASE_DB_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_SECRET_KEY` from the local CI stack. Both jobs pass with a notice when no functions exist.
-- `.github/scripts/functions-task.sh <install|list|TASK> [--optional]` runs the same per-function steps locally from the repository root.
+GitHub Actions (`.github/workflows/`) run the same checks on pull requests and pushes to `main`: `supabase test db` and `supabase db advisors`, plus `deno task check`, `deno task test`, and, when defined, `deno task test:integration` (against `supabase functions serve`) in every function through `.github/scripts/functions-task.sh`.
 
 ## Frontend environment setup
 

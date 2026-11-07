@@ -1,0 +1,63 @@
+name: Database
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/**"
+      - "supabase/tests/**"
+      - "supabase/config.toml"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/database.yml"
+  push:
+    branches: [main]
+    paths:
+      - "supabase/migrations/**"
+      - "supabase/tests/**"
+      - "supabase/config.toml"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/database.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  db-tests:
+    name: Migrations and pgTAP tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      # Installs the Supabase CLI version pinned in the root package.json.
+      - name: Install Supabase CLI
+        run: npm ci
+
+      # Starting the stack applies every migration in supabase/migrations from scratch.
+      # Services the database tests do not need are skipped to save time.
+      - name: Start Supabase and apply migrations
+        run: npx supabase start -x studio,imgproxy,logflare,vector,edge-runtime
+
+      - name: Run database tests
+        run: npx supabase test db
+
+      - name: Run database advisors
+        run: npx supabase db advisors --local --fail-on error
+
+      - name: Show Supabase status on failure
+        if: failure()
+        run: npx supabase status || true

@@ -7,6 +7,7 @@ Partners Hub is a local-first React and Supabase platform where our business par
 - `web/`: self-contained Vite frontend with its own dependencies and lockfile; it can be used as the hosting project root. Generated database types live in `web/src/types/database.ts`.
 - `supabase/`: local Supabase configuration, database migrations, pgTAP tests, and Edge Functions. Edge Functions and their Deno tests live under `supabase/functions/`, with code used by more than one function in `supabase/functions/_shared/`.
 - `docs/`: project documentation
+- `.github/`: GitHub Actions workflows and CI helper scripts (`.github/scripts/`).
 - Root `package.json`: pinned Supabase CLI and shared development commands.
 
 ## Commands
@@ -42,6 +43,10 @@ Local Studio is available at `http://127.0.0.1:54323` while the Supabase stack i
 `generate-qrcode` is an internal PNG QR-code generator protected by the named Supabase secret key `qr-generator`. See `supabase/functions/generate-qrcode/README.md` for its request contract, local secret setup, and invocation example. Deno 2 is required to run its tests; Docker is required to serve it through the local Edge Runtime. Use ignored local `.env` files for function secrets and never commit real secret keys.
 
 `remove-organization-member` lets an organization admin remove a staff member: it sets `left_at` and soft-deletes the Auth account, which frees the email for a new account. See `supabase/functions/remove-organization-member/README.md`.
+
+## CI
+
+GitHub Actions (`.github/workflows/`) run the same checks on pull requests and pushes to `main`: `supabase test db` and `supabase db advisors`, plus `deno task check`, `deno task test`, and, when defined, `deno task test:integration` (against `supabase functions serve`) in every function through `.github/scripts/functions-task.sh`.
 
 ## Frontend environment setup
 

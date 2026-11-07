@@ -7,6 +7,7 @@ Partners Hub is a local-first React and Supabase platform where our business par
 - `web/`: self-contained Vite frontend with its own dependencies and lockfile; it can be used as the hosting project root. Generated database types live in `web/src/types/database.ts`.
 - `supabase/`: local Supabase configuration, database migrations, pgTAP tests, and Edge Functions. Edge Functions and their Deno tests live under `supabase/functions/`, with code used by more than one function in `supabase/functions/_shared/`.
 - `docs/`: project documentation
+- `.github/`: GitHub Actions workflows and CI helper scripts (`.github/scripts/`).
 - Root `package.json`: pinned Supabase CLI and shared development commands.
 
 ## Commands
@@ -42,6 +43,14 @@ Local Studio is available at `http://127.0.0.1:54323` while the Supabase stack i
 `generate-qrcode` is an internal PNG QR-code generator protected by the named Supabase secret key `qr-generator`. See `supabase/functions/generate-qrcode/README.md` for its request contract, local secret setup, and invocation example. Deno 2 is required to run its tests; Docker is required to serve it through the local Edge Runtime. Use ignored local `.env` files for function secrets and never commit real secret keys.
 
 `remove-organization-member` lets an organization admin remove a staff member: it sets `left_at` and soft-deletes the Auth account, which frees the email for a new account. See `supabase/functions/remove-organization-member/README.md`.
+
+## CI
+
+GitHub Actions run on pull requests and pushes to `main` when relevant paths change:
+
+- `.github/workflows/database.yml`: installs the pinned Supabase CLI with `npm ci`, runs `supabase start` (applies all migrations), `supabase test db`, and `supabase db advisors --local --fail-on error`.
+- `.github/workflows/edge-functions.yml`: the `unit` job sets up Deno 2 and runs `deno install`, `deno task check`, and `deno task test` in every `supabase/functions/<name>/` that has a `deno.json` (directories starting with `_` are skipped). The `integration` job then starts the stack, runs `supabase functions serve`, waits for each function to boot, and runs `deno task test:integration` in functions that define it. Integration tests get `SUPABASE_URL`, `SUPABASE_FUNCTIONS_URL`, `SUPABASE_DB_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_SECRET_KEY` from the local CI stack. Both jobs pass with a notice when no functions exist.
+- `.github/scripts/functions-task.sh <install|list|TASK> [--optional]` runs the same per-function steps locally from the repository root.
 
 ## Frontend environment setup
 

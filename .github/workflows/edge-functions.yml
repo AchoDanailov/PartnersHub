@@ -1,0 +1,157 @@
+name: Edge Functions
+
+on:
+  pull_request:
+    paths:
+      - "supabase/functions/**"
+      - "supabase/migrations/**"
+      - "supabase/config.toml"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/scripts/functions-task.sh"
+      - ".github/workflows/edge-functions.yml"
+  push:
+    branches: [main]
+    paths:
+      - "supabase/functions/**"
+      - "supabase/migrations/**"
+      - "supabase/config.toml"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/scripts/functions-task.sh"
+      - ".github/workflows/edge-functions.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  DENO_VERSION: v2.x
+
+jobs:
+  unit:
+    name: Check and unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: ${{ env.DENO_VERSION }}
+          cache: true
+          cache-hash: ${{ hashFiles('supabase/functions/**/deno.json', 'supabase/functions/**/deno.lock') }}
+
+      - name: Restore dependencies
+        run: .github/scripts/functions-task.sh install
+
+      - name: Type-check functions
+        run: .github/scripts/functions-task.sh check
+
+      - name: Run unit tests
+        run: .github/scripts/functions-task.sh test
+
+  integration:
+    name: Integration tests (Edge Runtime)
+    needs: unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Discover functions
+        id: discover
+        run: |
+          names="$(.github/scripts/functions-task.sh list | tr '\n' ' ')"
+          echo "names=${names% }" >> "$GITHUB_OUTPUT"
+          if [[ -z "$names" ]]; then
+            echo "::notice::No Edge Functions found in supabase/functions; skipping integration tests."
+          fi
+
+      - name: Set up Node.js
+        if: steps.discover.outputs.names != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      # Installs the Supabase CLI version pinned in the root package.json.
+      - name: Install Supabase CLI
+        if: steps.discover.outputs.names != ''
+        run: npm ci
+
+      - name: Set up Deno
+        if: steps.discover.outputs.names != ''
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: ${{ env.DENO_VERSION }}
+          cache: true
+          cache-hash: ${{ hashFiles('supabase/functions/**/deno.json', 'supabase/functions/**/deno.lock') }}
+
+      - name: Restore dependencies
+        if: steps.discover.outputs.names != ''
+        run: .github/scripts/functions-task.sh install
+
+      # The Edge Runtime is started below by `functions serve`, the same way as locally.
+      - name: Start Supabase and apply migrations
+        if: steps.discover.outputs.names != ''
+        run: npx supabase start -x studio,imgproxy,logflare,vector,edge-runtime
+
+      # Local-only demo credentials from the CI stack, exposed to the integration tests.
+      - name: Export local Supabase environment
+        if: steps.discover.outputs.names != ''
+        run: |
+          eval "$(npx supabase status -o env)"
+          {
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_FUNCTIONS_URL=$API_URL/functions/v1"
+            echo "SUPABASE_DB_URL=$DB_URL"
+            echo "SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY"
+            echo "SUPABASE_SECRET_KEY=$SECRET_KEY"
+          } >> "$GITHUB_ENV"
+
+      - name: Serve Edge Functions
+        if: steps.discover.outputs.names != ''
+        run: |
+          nohup npx supabase functions serve > "$RUNNER_TEMP/functions-serve.log" 2>&1 &
+          for name in ${{ steps.discover.outputs.names }}; do
+            echo "Waiting for $name..."
+            for attempt in $(seq 1 60); do
+              code="$(curl -s -o "$RUNNER_TEMP/ready-body" -w '%{http_code}' \
+                -H "Authorization: Bearer $SUPABASE_ANON_KEY" -H "apikey: $SUPABASE_ANON_KEY" \
+                "$SUPABASE_FUNCTIONS_URL/$name" || true)"
+              # The Edge Runtime answers BOOT_ERROR / WORKER_ERROR when a function crashes on start.
+              if grep -qE '"code": ?"(BOOT|WORKER)_ERROR"' "$RUNNER_TEMP/ready-body"; then
+                echo "::error::$name failed to start: $(cat "$RUNNER_TEMP/ready-body")"
+                cat "$RUNNER_TEMP/functions-serve.log"
+                exit 1
+              fi
+              case "$code" in
+                000|502|503|504) sleep 2 ;;
+                *) echo "$name is up (HTTP $code)"; continue 2 ;;
+              esac
+            done
+            echo "::error::$name did not become ready (last HTTP $code)"
+            cat "$RUNNER_TEMP/functions-serve.log"
+            exit 1
+          done
+
+      - name: Run integration tests
+        if: steps.discover.outputs.names != ''
+        run: .github/scripts/functions-task.sh test:integration --optional
+
+      - name: Show Edge Runtime logs on failure
+        if: failure() && steps.discover.outputs.names != ''
+        run: |
+          cat "$RUNNER_TEMP/functions-serve.log" || true
+          npx supabase status || true

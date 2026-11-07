@@ -45,7 +45,8 @@ jobs:
         uses: denoland/setup-deno@v2
         with:
           deno-version: ${{ env.DENO_VERSION }}
-          cache: true
+          # Only cache when a function exists: with none, Deno's cache dir is never created and saving it fails the job.
+          cache: ${{ hashFiles('supabase/functions/*/deno.json', '!supabase/functions/_*/deno.json') != '' }}
           cache-hash: ${{ hashFiles('supabase/functions/**/deno.json', 'supabase/functions/**/deno.lock') }}
 
       - name: Restore dependencies
@@ -93,7 +94,8 @@ jobs:
         uses: denoland/setup-deno@v2
         with:
           deno-version: ${{ env.DENO_VERSION }}
-          cache: true
+          # Only cache when a function exists: with none, Deno's cache dir is never created and saving it fails the job.
+          cache: ${{ hashFiles('supabase/functions/*/deno.json', '!supabase/functions/_*/deno.json') != '' }}
           cache-hash: ${{ hashFiles('supabase/functions/**/deno.json', 'supabase/functions/**/deno.lock') }}
 
       - name: Restore dependencies

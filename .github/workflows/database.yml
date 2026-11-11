@@ -5,6 +5,7 @@ on:
     paths:
       - "supabase/migrations/**"
       - "supabase/tests/**"
+      - "supabase/seed.sql"
       - "supabase/config.toml"
       - "package.json"
       - "package-lock.json"
@@ -14,6 +15,7 @@ on:
     paths:
       - "supabase/migrations/**"
       - "supabase/tests/**"
+      - "supabase/seed.sql"
       - "supabase/config.toml"
       - "package.json"
       - "package-lock.json"

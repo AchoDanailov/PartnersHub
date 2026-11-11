@@ -1,0 +1,20 @@
+{
+  "workspace": [
+    "./soft-remove-organization-member"
+  ],
+  "tasks": {
+    "check": "deno check soft-remove-organization-member/index.ts tests/",
+    "test": "deno test --allow-env tests/"
+  },
+  "fmt": {
+    "exclude": [
+      "_shared/database.types.ts",
+      "**/*.md"
+    ]
+  },
+  "lint": {
+    "exclude": [
+      "_shared/database.types.ts"
+    ]
+  }
+}

@@ -32,9 +32,9 @@ All tables have RLS enabled. Column-level grants limit which columns each role c
 ### authenticated
 
 - **Updating own username** - may update `profiles.username`, on their own non-anonymized profile. 
-- **Removing organization member** - admins go through the `remove-organization-member` Edge Function, which authenticates and authorizes them. They cannot call the RPC directly.
+- **Removing organization member** - admins go through the `soft-remove-organization-member` Edge Function, which authenticates and authorizes them. They cannot call the RPC directly.
 
 ### service_role
 
 - **Full access to all tables, and bypasses RLS**
-- **Removing organization member** - `public.remove_organization_member(p_actor_id, p_user_id)` (RPC, only `service_role` can call): called by the `remove-organization-member` Edge Function or an operator. `p_actor_id` must be the current admin of the staff member's organization, for every caller. The Edge Function then uses the Admin API to soft delete the user (from the `auth` table), thus releasing the email to be used again in a different organization.
+- **Removing organization member** - `public.remove_organization_member(p_actor_id, p_user_id)` (RPC, only `service_role` can call): called by the `soft-remove-organization-member` Edge Function or an operator. `p_actor_id` must be the current admin of the staff member's organization, for every caller. The Edge Function then uses the Admin API to soft delete the user (from the `auth` table), thus releasing the email to be used again in a different organization.

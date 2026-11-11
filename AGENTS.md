@@ -5,7 +5,7 @@ Partners Hub is a local-first React and Supabase platform where our business par
 ## Project layout
 
 - `web/`: self-contained Vite frontend with its own dependencies and lockfile; it can be used as the hosting project root. Generated database types live in `web/src/types/database.ts`.
-- `supabase/`: local Supabase configuration, database migrations, pgTAP tests, and Edge Functions. Edge Functions and their Deno tests live under `supabase/functions/`, with code used by more than one function in `supabase/functions/_shared/`.
+- `supabase/`: local Supabase configuration, database migrations, pgTAP tests, and Edge Functions. Follow the `edge-functions` skill when writing or changing Edge Functions.
 - `docs/`: project documentation
 - `.github/`: GitHub Actions workflows and CI helper scripts (`.github/scripts/`).
 - Root `package.json`: pinned Supabase CLI and shared development commands.
@@ -28,25 +28,17 @@ npx supabase migration up
 npx supabase test db
 npx supabase db advisors --local
 npx supabase gen types typescript --local --schema public > web/src/types/database.ts
-npx supabase functions serve generate-qrcode
-npx supabase functions serve remove-organization-member
+npx supabase gen types typescript --local --schema public > supabase/functions/_shared/database.types.ts
+npx supabase functions serve soft-remove-organization-member
 
-# from either function's directory under supabase/functions/
+# from supabase/functions/ (all functions) or a function's directory (that function only)
 deno task check
 deno task test
+deno fmt --check
+deno lint
 ```
 
 Local Studio is available at `http://127.0.0.1:54323` while the Supabase stack is running.
-
-## Edge Functions
-
-`generate-qrcode` is an internal PNG QR-code generator protected by the named Supabase secret key `qr-generator`. See `supabase/functions/generate-qrcode/README.md` for its request contract, local secret setup, and invocation example. Deno 2 is required to run its tests; Docker is required to serve it through the local Edge Runtime. Use ignored local `.env` files for function secrets and never commit real secret keys.
-
-`remove-organization-member` lets an organization admin remove a staff member: it sets `left_at` and soft-deletes the Auth account, which frees the email for a new account. See `supabase/functions/remove-organization-member/README.md`.
-
-## CI
-
-GitHub Actions (`.github/workflows/`) run the same checks on pull requests and pushes to `main`: `supabase test db` and `supabase db advisors`, plus `deno task check`, `deno task test`, and, when defined, `deno task test:integration` (against `supabase functions serve`) in every function through `.github/scripts/functions-task.sh`.
 
 ## Frontend environment setup
 
@@ -64,7 +56,7 @@ GitHub Actions (`.github/workflows/`) run the same checks on pull requests and p
 
 ## Verification and changes
 
-- Run `npx supabase test db` and `npx supabase db advisors --local` for database changes; regenerate `web/src/types/database.ts` after schema changes.
+- Run `npx supabase test db` and `npx supabase db advisors --local` for database changes; regenerate `web/src/types/database.ts` and `supabase/functions/_shared/database.types.ts` after schema changes.
 - Run `npm run lint` and `npm run build` for relevant frontend changes; add targeted tests when a test runner is introduced.
 - Keep changes minimal and update this file when project structure or commands change.
 - Do not perform Git mutations unless explicitly requested.

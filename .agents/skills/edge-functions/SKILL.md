@@ -68,7 +68,7 @@ Use the helpers that already exist in `_shared/http.ts` rather than writing new 
   - Never use `user_metadata` for authorization.
 - **Input**: validate everything from the request and give the body a byte limit through `readJsonBody`. Normalise identifiers (for example, lowercase UUIDs) before comparing them.
 - **Idempotency**: when a retry is likely (network failure after a write), make the operation safe to repeat and say so in the handler's doc comment.
-- **Dependencies**: pin npm versions exactly in the function's `deno.json` (`"npm:@supabase/server@1.9.2"`) and import them by bare name. Test-only packages (such as `jsqr`) go in the workspace root `deno.json`, not the function's.
+- **Dependencies**: pin npm versions exactly in the function's `deno.json` (`"npm:@supabase/server@1.9.2"`) and import them by bare name. Test-only packages go in the workspace root `deno.json`, not the function's.
 - **Secrets**: read them from env, keep them in ignored local `.env` files, and never commit them or put them in `web/` or `VITE_*` variables.
 
 ## Registering a new function
@@ -82,29 +82,14 @@ Use the helpers that already exist in `_shared/http.ts` rather than writing new 
    entrypoint = "./functions/my-function/index.ts"
    ```
 2. **Add the function to `"workspace"`** in `supabase/functions/deno.json`, and extend the root `check` task to include its `index.ts`.
-3. **Give the function's `deno.json` its own tasks** (see Tests below).
-4. **Write a `README.md`** with the endpoint, request and response shapes, error codes, auth, local setup, and how to verify. Use `generate-qrcode/README.md` as the model.
+3. **Put its tests in `supabase/functions/tests/<fn>/`**, which the root `check` and `test` tasks already cover (see Tests below).
+4. **Write a `README.md`** with the endpoint, request and response shapes, error codes, auth, local setup, and how to verify. Use `soft-remove-organization-member/README.md` as the model.
 
 ## Tests
 
-CI runs `.github/scripts/functions-task.sh`. The script finds functions by globbing `supabase/functions/*/deno.json`, skipping `_` folders. Inside each function directory it then runs `deno install`, `deno task check`, `deno task test`, and `deno task test:integration` if the function's own `deno.json` defines it. A test is therefore only run in CI if the function's `deno.json` has a task that points at it. If a function has no `check`/`test` task, Deno falls back to the workspace-root task, so every function's CI step reruns the whole suite.
+CI runs `.github/scripts/functions-task.sh` from the `supabase/functions/` workspace root: `install`, then `check`, then `test`. These run the root `check` and `test` tasks in `supabase/functions/deno.json`, so a function is only checked and tested in CI if those tasks cover its `index.ts` and `tests/<fn>/` folder.
 
-Scope each function's tasks to its own test folder:
-
-```json
-"tasks": {
-  "check": "deno check index.ts ../tests/my-function/",
-  "test": "deno test --allow-env ../tests/my-function/"
-}
-```
-
-- **Permissions**: grant only what the tests need, for example `--allow-read=./assets` for bundled files.
-- **Integration tests**: if a function has any, put them in `tests/<fn>/integration/` and keep them out of the unit task. CI's integration job serves every function, exports `SUPABASE_URL`, `SUPABASE_FUNCTIONS_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` and so on, and then runs the task.
-  ```json
-  "test": "deno test --allow-env --ignore=../tests/my-function/integration/ ../tests/my-function/",
-  "test:integration": "deno test --allow-env --allow-net ../tests/my-function/integration/"
-  ```
-- **Boot without secrets**: the integration job sends a plain GET to each function to check it booted and fails on `BOOT_ERROR`. A function must start without any optional local-only env variables.
+- **Permissions**: grant only what the tests need in the root `test` task, for example `--allow-read=./my-function/assets` for bundled files.
 
 Writing the tests:
 

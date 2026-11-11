@@ -1,15 +1,10 @@
 {
   "workspace": [
-    "./generate-qrcode",
     "./soft-remove-organization-member"
   ],
-  "imports": {
-    "imagescript": "npm:imagescript@3.8.1",
-    "jsqr": "npm:jsqr@1.4.0"
-  },
   "tasks": {
-    "check": "deno check generate-qrcode/index.ts soft-remove-organization-member/index.ts tests/",
-    "test": "deno test --allow-env --allow-read=./generate-qrcode/assets tests/"
+    "check": "deno check soft-remove-organization-member/index.ts tests/",
+    "test": "deno test --allow-env tests/"
   },
   "fmt": {
     "exclude": [

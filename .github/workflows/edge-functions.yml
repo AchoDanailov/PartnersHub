@@ -4,20 +4,12 @@ on:
   pull_request:
     paths:
       - "supabase/functions/**"
-      - "supabase/migrations/**"
-      - "supabase/config.toml"
-      - "package.json"
-      - "package-lock.json"
       - ".github/scripts/functions-task.sh"
       - ".github/workflows/edge-functions.yml"
   push:
     branches: [main]
     paths:
       - "supabase/functions/**"
-      - "supabase/migrations/**"
-      - "supabase/config.toml"
-      - "package.json"
-      - "package-lock.json"
       - ".github/scripts/functions-task.sh"
       - ".github/workflows/edge-functions.yml"
   workflow_dispatch:
@@ -45,9 +37,8 @@ jobs:
         uses: denoland/setup-deno@v2
         with:
           deno-version: ${{ env.DENO_VERSION }}
-          # Only cache when a function exists: with none, Deno's cache dir is never created and saving it fails the job.
-          cache: ${{ hashFiles('supabase/functions/*/deno.json', '!supabase/functions/_*/deno.json') != '' }}
-          cache-hash: ${{ hashFiles('supabase/functions/**/deno.json', 'supabase/functions/**/deno.lock') }}
+          cache: true
+          cache-hash: ${{ hashFiles('supabase/functions/deno.json', 'supabase/functions/deno.lock') }}
 
       - name: Restore dependencies
         run: .github/scripts/functions-task.sh install

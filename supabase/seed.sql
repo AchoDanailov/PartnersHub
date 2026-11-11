@@ -20,11 +20,16 @@
 --   admin:    admin@harbor.example.com
 --   staff:    staff-1@harbor.example.com
 --   services: Day Pass
+-- Cedar Studio
+--   admin:    admin@cedar.example.com
+--   staff:    staff-1@cedar.example.com
+--   services: Yoga Class, Pilates Class
 
 insert into public.organizations (id, name)
 values
   ('a1000000-0000-0000-0000-000000000001', 'Alpine Wellness'),
-  ('a1000000-0000-0000-0000-000000000002', 'Harbor Fitness');
+  ('a1000000-0000-0000-0000-000000000002', 'Harbor Fitness'),
+  ('a1000000-0000-0000-0000-000000000003', 'Cedar Studio');
 
 -- Confirmed email/password users. GoTrue's password grant fails when the token
 -- columns are NULL, so they are set to empty strings.
@@ -67,7 +72,9 @@ from (
     ('a2000000-0000-0000-0000-000000000002'::uuid, 'staff-1@alpine.example.com'),
     ('a2000000-0000-0000-0000-000000000003'::uuid, 'staff-2@alpine.example.com'),
     ('a2000000-0000-0000-0000-000000000004'::uuid, 'admin@harbor.example.com'),
-    ('a2000000-0000-0000-0000-000000000005'::uuid, 'staff-1@harbor.example.com')
+    ('a2000000-0000-0000-0000-000000000005'::uuid, 'staff-1@harbor.example.com'),
+    ('a2000000-0000-0000-0000-000000000006'::uuid, 'admin@cedar.example.com'),
+    ('a2000000-0000-0000-0000-000000000007'::uuid, 'staff-1@cedar.example.com')
 ) as seeded (id, email);
 
 insert into auth.identities (
@@ -102,7 +109,9 @@ values
   ('a2000000-0000-0000-0000-000000000002', 'alpine-staff-1'),
   ('a2000000-0000-0000-0000-000000000003', 'alpine-staff-2'),
   ('a2000000-0000-0000-0000-000000000004', 'harbor-admin'),
-  ('a2000000-0000-0000-0000-000000000005', 'harbor-staff-1');
+  ('a2000000-0000-0000-0000-000000000005', 'harbor-staff-1'),
+  ('a2000000-0000-0000-0000-000000000006', 'cedar-admin'),
+  ('a2000000-0000-0000-0000-000000000007', 'cedar-staff-1');
 
 insert into public.organization_members (user_id, organization_id, role)
 values
@@ -110,13 +119,17 @@ values
   ('a2000000-0000-0000-0000-000000000002', 'a1000000-0000-0000-0000-000000000001', 'staff'),
   ('a2000000-0000-0000-0000-000000000003', 'a1000000-0000-0000-0000-000000000001', 'staff'),
   ('a2000000-0000-0000-0000-000000000004', 'a1000000-0000-0000-0000-000000000002', 'admin'),
-  ('a2000000-0000-0000-0000-000000000005', 'a1000000-0000-0000-0000-000000000002', 'staff');
+  ('a2000000-0000-0000-0000-000000000005', 'a1000000-0000-0000-0000-000000000002', 'staff'),
+  ('a2000000-0000-0000-0000-000000000006', 'a1000000-0000-0000-0000-000000000003', 'admin'),
+  ('a2000000-0000-0000-0000-000000000007', 'a1000000-0000-0000-0000-000000000003', 'staff');
 
 insert into public.services (id, organization_id, name)
 values
   ('a4000000-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-000000000001', 'Massage'),
   ('a4000000-0000-0000-0000-000000000002', 'a1000000-0000-0000-0000-000000000001', 'Sauna'),
-  ('a4000000-0000-0000-0000-000000000003', 'a1000000-0000-0000-0000-000000000002', 'Day Pass');
+  ('a4000000-0000-0000-0000-000000000003', 'a1000000-0000-0000-0000-000000000002', 'Day Pass'),
+  ('a4000000-0000-0000-0000-000000000004', 'a1000000-0000-0000-0000-000000000003', 'Yoga Class'),
+  ('a4000000-0000-0000-0000-000000000005', 'a1000000-0000-0000-0000-000000000003', 'Pilates Class');
 
 -- Dates are relative to the seeding day so the data does not go stale.
 -- Each organization has an active, a redeemed, a cancelled and an expired voucher.
@@ -144,4 +157,11 @@ values
   ('a5000000-0000-0000-0000-000000000006', 'HARBOR-DAYPASS-0001', 'a4000000-0000-0000-0000-000000000003', 'active', current_date + 90, now(), null, null),
   ('a5000000-0000-0000-0000-000000000007', 'HARBOR-DAYPASS-0002', 'a4000000-0000-0000-0000-000000000003', 'redeemed', current_date + 90, now() - interval '7 days', 'a2000000-0000-0000-0000-000000000005', now() - interval '2 days'),
   ('a5000000-0000-0000-0000-000000000008', 'HARBOR-DAYPASS-0003', 'a4000000-0000-0000-0000-000000000003', 'cancelled', current_date + 90, now(), null, null),
-  ('a5000000-0000-0000-0000-000000000009', 'HARBOR-DAYPASS-0004', 'a4000000-0000-0000-0000-000000000003', 'active', current_date - 30, now() - interval '60 days', null, null);
+  ('a5000000-0000-0000-0000-000000000009', 'HARBOR-DAYPASS-0004', 'a4000000-0000-0000-0000-000000000003', 'active', current_date - 30, now() - interval '60 days', null, null),
+  -- Cedar Studio: Yoga Class
+  ('a5000000-0000-0000-0000-000000000010', 'CEDAR-YOGA-0001', 'a4000000-0000-0000-0000-000000000004', 'active', current_date + 90, now(), null, null),
+  ('a5000000-0000-0000-0000-000000000011', 'CEDAR-YOGA-0002', 'a4000000-0000-0000-0000-000000000004', 'redeemed', current_date + 90, now() - interval '7 days', 'a2000000-0000-0000-0000-000000000007', now() - interval '2 days'),
+  -- Cedar Studio: Pilates Class
+  ('a5000000-0000-0000-0000-000000000012', 'CEDAR-PILATES-0001', 'a4000000-0000-0000-0000-000000000005', 'active', current_date + 90, now(), null, null),
+  ('a5000000-0000-0000-0000-000000000013', 'CEDAR-PILATES-0002', 'a4000000-0000-0000-0000-000000000005', 'cancelled', current_date + 90, now(), null, null),
+  ('a5000000-0000-0000-0000-000000000014', 'CEDAR-PILATES-0003', 'a4000000-0000-0000-0000-000000000005', 'active', current_date - 30, now() - interval '60 days', null, null);

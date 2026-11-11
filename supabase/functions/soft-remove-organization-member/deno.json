@@ -4,6 +4,7 @@
   },
   "tasks": {
     "check": "deno check index.ts ../tests/soft-remove-organization-member/",
-    "test": "deno test --allow-env ../tests/soft-remove-organization-member/"
+    "test": "deno test --allow-env ../tests/soft-remove-organization-member/",
+    "test:integration": "deno test --allow-env --allow-net=127.0.0.1:54321,localhost:54321 ../tests/soft-remove-organization-member/*.integration-tests.ts"
   }
 }

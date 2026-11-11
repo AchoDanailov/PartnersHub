@@ -2,6 +2,7 @@
   "version": "5",
   "specifiers": {
     "npm:@supabase/server@1.9.2": "1.9.2_@supabase+supabase-js@2.118.0",
+    "npm:@supabase/supabase-js@2.118.0": "2.118.0",
     "npm:@types/qrcode@1.5.6": "1.5.6"
   },
   "npm": {
@@ -93,6 +94,9 @@
     }
   },
   "workspace": {
+    "dependencies": [
+      "npm:@supabase/supabase-js@2.118.0"
+    ],
     "members": {
       "soft-remove-organization-member": {
         "dependencies": [

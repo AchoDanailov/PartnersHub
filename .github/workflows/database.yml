@@ -1,7 +1,9 @@
 name: Database
 
+# Runs on every push to every branch; same-repository PRs reuse the push run's checks.
 on:
-  pull_request:
+  push:
+    branches: ["**"]
     paths:
       - "supabase/migrations/**"
       - "supabase/tests/**"
@@ -10,8 +12,7 @@ on:
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/database.yml"
-  push:
-    branches: [main]
+  pull_request:
     paths:
       - "supabase/migrations/**"
       - "supabase/tests/**"
@@ -32,6 +33,7 @@ permissions:
 jobs:
   db-tests:
     name: Migrations and pgTAP tests
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

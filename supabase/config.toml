@@ -415,16 +415,6 @@ enabled = true
 # and column/key alignment. Set to "null" to emit raw, unformatted SQL.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":180,\"commaStyle\":\"trailing\"}"
 
-[functions.generate-qrcode]
-enabled = true
-verify_jwt = false
-import_map = "./functions/generate-qrcode/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-entrypoint = "./functions/generate-qrcode/index.ts"
-# Static logo bundled for centered QR-code composition.
-static_files = [ "./functions/generate-qrcode/assets/b-logo.png" ]
-
 [functions.soft-remove-organization-member]
 enabled = true
 verify_jwt = true

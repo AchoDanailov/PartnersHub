@@ -29,7 +29,6 @@ npx supabase test db
 npx supabase db advisors --local
 npx supabase gen types typescript --local --schema public > web/src/types/database.ts
 npx supabase gen types typescript --local --schema public > supabase/functions/_shared/database.types.ts
-npx supabase functions serve generate-qrcode
 npx supabase functions serve soft-remove-organization-member
 
 # from supabase/functions/ (all functions) or a function's directory (that function only)

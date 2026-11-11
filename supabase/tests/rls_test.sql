@@ -210,20 +210,22 @@ select ok((select relrowsecurity from pg_class where oid = 'public.vouchers'::re
 
 -- Anonymous users
 
+-- The "read all" checks filter to this file's fixture ID prefixes, because the
+-- database may already hold rows from supabase/seed.sql.
 set local role anon;
 
 select results_eq(
-  $$select id::text from public.organizations order by id$$,
+  $$select id::text from public.organizations where id::text like '10000000-%' order by id$$,
   array['10000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000002'],
   'anonymous users read all organizations'
 );
 select results_eq(
-  $$select id::text from public.services order by id$$,
+  $$select id::text from public.services where id::text like '40000000-%' order by id$$,
   array['40000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000002'],
   'anonymous users read all services'
 );
 select results_eq(
-  $$select id::text || ':' || status::text from public.vouchers order by id$$,
+  $$select id::text || ':' || status::text from public.vouchers where id::text like '50000000-%' order by id$$,
   array[
     '50000000-0000-0000-0000-000000000001:active',
     '50000000-0000-0000-0000-000000000002:redeemed',

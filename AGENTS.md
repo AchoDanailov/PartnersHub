@@ -6,6 +6,7 @@ Partners Hub is a local-first React and Supabase platform where our business par
 
 - `web/`: self-contained Vite frontend with its own dependencies and lockfile; it can be used as the hosting project root. Generated database types live in `web/src/types/database.ts`.
 - `supabase/`: local Supabase configuration, database migrations, pgTAP tests, and Edge Functions. Follow the `edge-functions` skill when writing or changing Edge Functions.
+- `supabase/seed.sql`: local and CI seed data, loaded after migrations by `npx supabase start` and `npx supabase db reset`. It holds three organizations with fixed IDs (`a1000000-...` organizations, `a2000000-...` users, `a4000000-...` services, `a5000000-...` vouchers). Every seeded user signs in with the local-only password `password123`. pgTAP tests must not assume the database is empty.
 - `docs/`: project documentation
 - `.github/`: GitHub Actions workflows and CI helper scripts (`.github/scripts/`).
 - Root `package.json`: pinned Supabase CLI and shared development commands.

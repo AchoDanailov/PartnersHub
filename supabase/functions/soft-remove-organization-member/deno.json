@@ -1,0 +1,9 @@
+{
+  "imports": {
+    "@supabase/server": "npm:@supabase/server@1.9.2"
+  },
+  "tasks": {
+    "check": "deno check index.ts ../tests/soft-remove-organization-member/",
+    "test": "deno test --allow-env ../tests/soft-remove-organization-member/"
+  }
+}

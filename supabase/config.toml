@@ -425,8 +425,8 @@ entrypoint = "./functions/generate-qrcode/index.ts"
 # Static logo bundled for centered QR-code composition.
 static_files = [ "./functions/generate-qrcode/assets/b-logo.png" ]
 
-[functions.remove-organization-member]
+[functions.soft-remove-organization-member]
 enabled = true
 verify_jwt = true
-import_map = "./functions/remove-organization-member/deno.json"
-entrypoint = "./functions/remove-organization-member/index.ts"
+import_map = "./functions/soft-remove-organization-member/deno.json"
+entrypoint = "./functions/soft-remove-organization-member/index.ts"

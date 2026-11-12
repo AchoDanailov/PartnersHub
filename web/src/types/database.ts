@@ -65,7 +65,7 @@ isOneToOne: true
                   }
                   ComputedFields: never
                   Insert: {
-                    "alt_text"?: string | null,"created_at"?: string,"id"?: string,"path": string,"service_id": string,"sort_order"?: number
+                    "alt_text"?: string | null,"created_at"?: string,"id"?: string,"path": string,"service_id": string,"sort_order": number
                   }
                   Update: {
                     "alt_text"?: string | null,"created_at"?: string,"id"?: string,"path"?: string,"service_id"?: string,"sort_order"?: number

@@ -11,9 +11,7 @@ All tables have RLS enabled. Column-level grants limit which columns each role c
 | `organizations` | All rows: `id`, `name` | Members of that organization |
 | `services` | All rows: `id`, `organization_id`, `name` | Members of the owning organization |
 | `vouchers` | All rows: `id`, `status`, `expires_on` | Members of the owning organization: `id`, `service_id`, `status`, `expires_on` |
-| `service_images` | All rows: `id`, `service_id`, `path`, `alt_text`, `sort_order`, `created_at` | Members of the owning organization |
-
-Images of a service are read in `sort_order`. `service_images.created_at` is readable by `anon`, unlike `created_at` on the other tables, because `sort_order` is not unique and `created_at` breaks the ties (`order by sort_order, created_at`).
+| `service_images` | All rows: `id`, `service_id`, `path`, `alt_text`, `sort_order` | Members of the owning organization |
 
 ### Other open interfaces to read resources
 
@@ -28,7 +26,7 @@ Images of a service are read in `sort_order`. `service_images.created_at` is rea
 
 ## Storage
 
-Service image files live in the **public** bucket `service-images` (5 MiB per file; JPEG, PNG, WebP and AVIF only). `public.service_images` is the catalogue: each row's `path` is an object key in that bucket.
+Service image files live in the **public** bucket `service-images` (5 MiB per file; JPEG, PNG, WebP and AVIF only). `public.service_images` has one row per image; `path` is the file's key in that bucket.
 
 | Action | `anon` and `authenticated` | `service_role` |
 | --- | --- | --- |

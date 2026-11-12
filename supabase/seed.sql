@@ -167,13 +167,9 @@ values
   ('a5000000-0000-0000-0000-000000000013', 'CEDAR-PILATES-0002', 'a4000000-0000-0000-0000-000000000005', 'cancelled', current_date + 90, now(), null, null),
   ('a5000000-0000-0000-0000-000000000014', 'CEDAR-PILATES-0003', 'a4000000-0000-0000-0000-000000000005', 'active', current_date - 30, now() - interval '60 days', null, null);
 
--- Service images. Each path is an object in the public service-images bucket,
--- following <organization_id>/<service_id>/<image_id>.<ext>. The files live in
--- supabase/seed/service-images and are uploaded by the CLI (see the
--- [storage.buckets.service-images] block in config.toml). They are original
--- illustrations drawn for this repository: no real logos, brands or photos.
--- `sort_order` is the position of an image within its service. Pilates Class
--- has no images on purpose, to cover the empty state.
+-- Service images. Each path is a file under supabase/seed/service-images, at
+-- <organization_id>/<service_id>/<image_id>.<ext>. Pilates Class has no images
+-- on purpose, to cover the empty state.
 insert into public.service_images (id, service_id, path, alt_text, sort_order)
 values
   ('a6000000-0000-0000-0000-000000000001', 'a4000000-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-000000000001/a4000000-0000-0000-0000-000000000001/a6000000-0000-0000-0000-000000000001.jpg', 'Smooth dark massage stones stacked beside a rolled white towel, with mountains in the background', 0),

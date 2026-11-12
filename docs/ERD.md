@@ -65,7 +65,7 @@ erDiagram
         uuid service_id FK "references services.id, on delete cascade"
         text path UK "object key in the service-images bucket; not blank, no leading slash"
         text alt_text "nullable; not blank when present"
-        integer sort_order "default 0; not negative; position within the service, not unique"
+        integer sort_order "not negative; position within the service, unique per service"
         timestamptz created_at "default now()"
     }
 ```

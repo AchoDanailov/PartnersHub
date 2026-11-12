@@ -1,5 +1,5 @@
 begin;
-select plan(33);
+select plan(36);
 
 insert into public.organizations (id, name)
 values
@@ -41,10 +41,9 @@ values
   ('62000000-0000-0000-0000-000000000002', '42000000-0000-0000-0000-000000000001', 'test/one/second.png', null, 0),
   ('62000000-0000-0000-0000-000000000005', '42000000-0000-0000-0000-000000000004', 'test/delete/first.jpg', null, 0);
 
--- No sort_order given, so the default applies.
-insert into public.service_images (id, service_id, path, alt_text)
+insert into public.service_images (id, service_id, path, alt_text, sort_order)
 values
-  ('62000000-0000-0000-0000-000000000003', '42000000-0000-0000-0000-000000000002', 'test/two/first.jpg', 'Other organization image');
+  ('62000000-0000-0000-0000-000000000003', '42000000-0000-0000-0000-000000000002', 'test/two/first.jpg', 'Other organization image', 0);
 
 -- Organization Three stops working with us after its service was created.
 update public.organizations
@@ -67,7 +66,7 @@ select ok(
   and has_column_privilege('anon', 'public.service_images', 'path', 'select')
   and has_column_privilege('anon', 'public.service_images', 'alt_text', 'select')
   and has_column_privilege('anon', 'public.service_images', 'sort_order', 'select')
-  and has_column_privilege('anon', 'public.service_images', 'created_at', 'select'),
+  and not has_column_privilege('anon', 'public.service_images', 'created_at', 'select'),
   'anon has only column-level select on service images'
 );
 select ok(
@@ -114,25 +113,25 @@ select is_empty(
 -- Constraints and triggers
 
 select throws_ok(
-  $$insert into public.service_images (service_id, path) values ('42000000-0000-0000-0000-000000000002', 'test/one/first.jpg')$$,
+  $$insert into public.service_images (service_id, path, sort_order) values ('42000000-0000-0000-0000-000000000002', 'test/one/first.jpg', 5)$$,
   '23505',
   null,
   'image paths are unique'
 );
 select throws_ok(
-  $$insert into public.service_images (service_id, path) values ('42000000-0000-0000-0000-000000000001', '   ')$$,
+  $$insert into public.service_images (service_id, path, sort_order) values ('42000000-0000-0000-0000-000000000001', '   ', 5)$$,
   '23514',
   null,
   'image paths cannot be blank'
 );
 select throws_ok(
-  $$insert into public.service_images (service_id, path) values ('42000000-0000-0000-0000-000000000001', '/test/one/third.jpg')$$,
+  $$insert into public.service_images (service_id, path, sort_order) values ('42000000-0000-0000-0000-000000000001', '/test/one/third.jpg', 5)$$,
   '23514',
   null,
   'image paths cannot start with a slash'
 );
 select throws_ok(
-  $$insert into public.service_images (service_id, path, alt_text) values ('42000000-0000-0000-0000-000000000001', 'test/one/third.jpg', '  ')$$,
+  $$insert into public.service_images (service_id, path, alt_text, sort_order) values ('42000000-0000-0000-0000-000000000001', 'test/one/third.jpg', '  ', 5)$$,
   '23514',
   null,
   'alt text cannot be blank when present'
@@ -143,13 +142,20 @@ select throws_ok(
   null,
   'sort order cannot be negative'
 );
-select results_eq(
-  $$select sort_order from public.service_images where id = '62000000-0000-0000-0000-000000000003'$$,
-  array[0],
-  'sort order defaults to 0'
+select throws_ok(
+  $$insert into public.service_images (service_id, path) values ('42000000-0000-0000-0000-000000000001', 'test/one/third.jpg')$$,
+  '23502',
+  null,
+  'sort order is required'
 );
 select throws_ok(
-  $$insert into public.service_images (service_id, path) values ('42000000-0000-0000-0000-000000000003', 'test/three/first.jpg')$$,
+  $$insert into public.service_images (service_id, path, sort_order) values ('42000000-0000-0000-0000-000000000001', 'test/one/third.jpg', 0)$$,
+  '23505',
+  null,
+  'sort order is unique within a service'
+);
+select throws_ok(
+  $$insert into public.service_images (service_id, path, sort_order) values ('42000000-0000-0000-0000-000000000003', 'test/three/first.jpg', 0)$$,
   'P0001',
   'Organization is deactivated',
   'images cannot be added for a deactivated organization'
@@ -170,12 +176,12 @@ select is_empty(
 set local role anon;
 
 select results_eq(
-  $$select id::text || ':' || path || ':' || coalesce(alt_text, '') || ':' || sort_order::text || ':' || (created_at is not null)::text
+  $$select id::text || ':' || path || ':' || coalesce(alt_text, '') || ':' || sort_order::text
     from public.service_images where id::text like '62000000-%' order by id$$,
   array[
-    '62000000-0000-0000-0000-000000000001:test/one/first.jpg:First image:1:true',
-    '62000000-0000-0000-0000-000000000002:test/one/second.png::0:true',
-    '62000000-0000-0000-0000-000000000003:test/two/first.jpg:Other organization image:0:true'
+    '62000000-0000-0000-0000-000000000001:test/one/first.jpg:First image:1',
+    '62000000-0000-0000-0000-000000000002:test/one/second.png::0',
+    '62000000-0000-0000-0000-000000000003:test/two/first.jpg:Other organization image:0'
   ],
   'anonymous users read all service images'
 );
@@ -204,7 +210,7 @@ set local role authenticated;
 set local request.jwt.claim.sub = '22000000-0000-0000-0000-000000000001';
 
 select results_eq(
-  $$select id::text from public.service_images order by sort_order, created_at$$,
+  $$select id::text from public.service_images order by sort_order$$,
   array['62000000-0000-0000-0000-000000000002', '62000000-0000-0000-0000-000000000001'],
   'an admin reads only images of their organization services, in sort order'
 );
@@ -262,7 +268,7 @@ reset role;
 set local role service_role;
 
 select lives_ok(
-  $$insert into public.service_images (id, service_id, path) values ('62000000-0000-0000-0000-000000000004', '42000000-0000-0000-0000-000000000002', 'test/two/second.png')$$,
+  $$insert into public.service_images (id, service_id, path, sort_order) values ('62000000-0000-0000-0000-000000000004', '42000000-0000-0000-0000-000000000002', 'test/two/second.png', 1)$$,
   'service_role can insert a service image'
 );
 select lives_ok(
@@ -281,6 +287,15 @@ select lives_ok(
 select lives_ok(
   $$delete from public.service_images where id = '62000000-0000-0000-0000-000000000004'$$,
   'service_role can delete a service image'
+);
+select lives_ok(
+  $$update public.service_images set sort_order = 1 - sort_order where service_id = '42000000-0000-0000-0000-000000000001'$$,
+  'one update can swap two positions'
+);
+select results_eq(
+  $$select id::text from public.service_images where service_id = '42000000-0000-0000-0000-000000000001' order by sort_order$$,
+  array['62000000-0000-0000-0000-000000000001', '62000000-0000-0000-0000-000000000002'],
+  'the swap is persisted'
 );
 
 reset role;

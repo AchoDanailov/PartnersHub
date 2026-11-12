@@ -7,9 +7,9 @@ Partners Hub is a local-first React and Supabase platform where our business par
 - `web/`: self-contained Vite frontend with its own dependencies and lockfile; it can be used as the hosting project root. Generated database types live in `web/src/types/database.ts`.
 - `supabase/`: local Supabase configuration, database migrations, pgTAP tests, and Edge Functions. Follow the `edge-functions` skill when writing or changing Edge Functions.
 - `supabase/seed.sql`: local and CI seed data, loaded after migrations by `npx supabase start` and `npx supabase db reset`. It holds three organizations with fixed IDs (`a1000000-...` organizations, `a2000000-...` users, `a4000000-...` services, `a5000000-...` vouchers, `a6000000-...` service images). Every seeded user signs in with the local-only password `password123`. pgTAP tests must not assume the database is empty.
-- `supabase/seed/service-images/`: seed image files for the public `service-images` Storage bucket, at `<organization_id>/<service_id>/<image_id>.<ext>`. The CLI uploads them through the `[storage.buckets.service-images]` block in `supabase/config.toml`, and `supabase/seed.sql` holds the matching `service_images` rows. Put only JPEG, PNG, WebP or AVIF files there, and only original images: never real logos, brands or third-party photos. The bucket itself is created in a migration (`docs/adr/0003-store-service-images-in-a-public-bucket.md`).
+- `supabase/seed/service-images/`: files for the `service-images` bucket, matching the `service_images` rows in `seed.sql`. Original JPEG, PNG, WebP or AVIF images only (`docs/adr/0003-store-service-images-in-a-public-bucket.md`).
 - `docs/`: project documentation
-- `.github/`: GitHub Actions workflows and CI helper scripts (`.github/scripts/`). The Database and Edge Functions workflows run on every push to every branch; the Database workflow also checks the seeded images and that both generated type files are up to date; the Edge Functions workflow boots the local stack and runs the integration tests (`docs/adr/0002-integration-tests-on-ci-against-a-local-stack.md`).
+- `.github/`: GitHub Actions workflows and CI helper scripts (`.github/scripts/`). The Database and Edge Functions workflows run on every push to every branch; the Database workflow also checks that both generated type files are up to date; the Edge Functions workflow boots the local stack and runs the integration tests (`docs/adr/0002-integration-tests-on-ci-against-a-local-stack.md`).
 - Root `package.json`: pinned Supabase CLI and shared development commands.
 
 ## Commands
@@ -30,7 +30,6 @@ npx supabase migration up
 npx supabase test db
 npx supabase db advisors --local
 npx supabase seed buckets --local   # re-upload supabase/seed/service-images without a reset
-.github/scripts/check-seed-images.sh   # seeded rows, bucket files and anonymous access agree
 npx supabase gen types typescript --local --schema public > web/src/types/database.ts
 npx supabase gen types typescript --local --schema public > supabase/functions/_shared/database.types.ts
 npx supabase functions serve soft-remove-organization-member

@@ -87,7 +87,7 @@ Use the helpers that already exist in `_shared/http.ts` rather than writing new 
 
 ## Tests
 
-CI runs `.github/scripts/functions-task.sh` from the `supabase/functions/` workspace root: `install`, then `check`, then `test`. These run the root `check` and `test` tasks in `supabase/functions/deno.json`, so a function is only checked and tested in CI if those tasks cover its `index.ts` and `tests/<fn>/` folder.
+CI runs `.github/scripts/functions-test-cmd-builder.sh` from the `supabase/functions/` workspace root: `install`, then `check`, then `test`. These run the root `check` and `test` tasks in `supabase/functions/deno.json`, so a function is only checked and tested in CI if those tasks cover its `index.ts` and `tests/<fn>/` folder.
 
 - **Permissions**: grant only what the tests need in the root `test` task, for example `--allow-read=./my-function/assets` for bundled files.
 
@@ -104,7 +104,7 @@ Writing the tests:
 `.github/workflows/edge-functions.yml` runs on every push to every branch, so agents get runtime feedback without Docker. It has two jobs:
 
 1. **Check and unit tests**: `install`, `check` and `test`, as described above.
-2. **Integration tests**: boots the local stack with migrations and `supabase/seed.sql`, serves every function through `.github/scripts/serve-functions.sh`, which fails on a boot error, then runs `test:integration`.
+2. **Integration tests**: boots the local stack with migrations and `supabase/seed.sql`, serves every function through `.github/scripts/serve-functions.sh`, which fails on a boot error, then runs `test:integration`. To check each function booted, the script sends it an empty POST signed in as a seeded user (user JWT plus publishable key) and treats any non-5xx answer as up. A function must reject that empty body without side effects.
 
 A function is only served and integration-tested if it follows this layout:
 

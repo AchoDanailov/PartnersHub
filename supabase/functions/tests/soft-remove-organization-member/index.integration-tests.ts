@@ -47,10 +47,11 @@ Deno.test("an admin soft-removes a staff member of their organization", async ()
   );
 
   // The Auth account is soft-deleted, so the member can no longer sign in.
-  const { error: signInError } = await anonClient().auth.signInWithPassword({
-    email: member.email,
-    password: PASSWORD,
-  });
+  const { error: signInError } = await publishableClient().auth
+    .signInWithPassword({
+      email: member.email,
+      password: PASSWORD,
+    });
   assert.ok(signInError, "a removed member cannot sign in");
 });
 
@@ -90,12 +91,12 @@ function requireEnv(name: string): string {
   return value;
 }
 
-function anonClient() {
+function publishableClient() {
   return createClient<Database>(SUPABASE_URL, PUBLISHABLE_KEY, clientOptions);
 }
 
 async function signIn(email: string): Promise<string> {
-  const { data, error } = await anonClient().auth.signInWithPassword({
+  const { data, error } = await publishableClient().auth.signInWithPassword({
     email,
     password: PASSWORD,
   });

@@ -54,13 +54,13 @@ jobs:
           cache-hash: ${{ hashFiles('supabase/functions/deno.json', 'supabase/functions/deno.lock') }}
 
       - name: Restore dependencies
-        run: .github/scripts/functions-task.sh install
+        run: .github/scripts/functions-test-cmd-builder.sh install
 
       - name: Type-check functions
-        run: .github/scripts/functions-task.sh check
+        run: .github/scripts/functions-test-cmd-builder.sh check
 
       - name: Run unit tests
-        run: .github/scripts/functions-task.sh test
+        run: .github/scripts/functions-test-cmd-builder.sh test
 
   integration:
     name: Integration tests (local stack)
@@ -90,7 +90,7 @@ jobs:
           cache-hash: ${{ hashFiles('supabase/functions/deno.json', 'supabase/functions/deno.lock') }}
 
       - name: Restore dependencies
-        run: .github/scripts/functions-task.sh install
+        run: .github/scripts/functions-test-cmd-builder.sh install
 
       # Applies every migration and supabase/seed.sql. The Edge Runtime is started by
       # `functions serve` below, the same way as locally.
@@ -107,14 +107,13 @@ jobs:
             echo "SUPABASE_DB_URL=$DB_URL"
             echo "SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY"
             echo "SUPABASE_SECRET_KEY=$SECRET_KEY"
-            echo "SUPABASE_ANON_KEY=$ANON_KEY"
           } >> "$GITHUB_ENV"
 
       - name: Serve Edge Functions
         run: .github/scripts/serve-functions.sh
 
       - name: Run integration tests
-        run: .github/scripts/functions-task.sh test:integration
+        run: .github/scripts/functions-test-cmd-builder.sh test:integration
 
       - name: Show Edge Runtime logs on failure
         if: failure()

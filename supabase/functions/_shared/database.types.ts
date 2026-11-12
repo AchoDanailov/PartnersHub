@@ -61,14 +61,14 @@ isOneToOne: true
                   ]
                 },"service_images": {
                   Row: {
-                    "alt_text": string | null,"created_at": string,"id": string,"path": string,"service_id": string
+                    "alt_text": string | null,"created_at": string,"id": string,"path": string,"service_id": string,"sort_order": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "alt_text"?: string | null,"created_at"?: string,"id"?: string,"path": string,"service_id": string
+                    "alt_text"?: string | null,"created_at"?: string,"id"?: string,"path": string,"service_id": string,"sort_order"?: number
                   }
                   Update: {
-                    "alt_text"?: string | null,"created_at"?: string,"id"?: string,"path"?: string,"service_id"?: string
+                    "alt_text"?: string | null,"created_at"?: string,"id"?: string,"path"?: string,"service_id"?: string,"sort_order"?: number
                   }
                   Relationships: [
                     {

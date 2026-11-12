@@ -11,9 +11,9 @@ All tables have RLS enabled. Column-level grants limit which columns each role c
 | `organizations` | All rows: `id`, `name` | Members of that organization |
 | `services` | All rows: `id`, `organization_id`, `name` | Members of the owning organization |
 | `vouchers` | All rows: `id`, `status`, `expires_on` | Members of the owning organization: `id`, `service_id`, `status`, `expires_on` |
-| `service_images` | All rows: `id`, `service_id`, `path`, `alt_text`, `created_at` | Members of the owning organization |
+| `service_images` | All rows: `id`, `service_id`, `path`, `alt_text`, `sort_order`, `created_at` | Members of the owning organization |
 
-`service_images.created_at` is readable by `anon`, unlike `created_at` on the other tables. It is the only way to order the images of a service until an explicit sort order exists.
+Images of a service are read in `sort_order`. `service_images.created_at` is readable by `anon`, unlike `created_at` on the other tables, because `sort_order` is not unique and `created_at` breaks the ties (`order by sort_order, created_at`).
 
 ### Other open interfaces to read resources
 

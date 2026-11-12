@@ -22,10 +22,18 @@ Image files live in the public bucket `service-images`, limited to 5 MiB per
 file and to JPEG, PNG, WebP and AVIF. The bucket is created in a migration.
 
 `public.service_images` is the catalogue. A row holds the `service_id`, the
-object `path` inside the bucket and an optional `alt_text`. Paths follow
-`<organization_id>/<service_id>/<image_id>.<ext>`. Both IDs are immutable, so a
-path never goes stale. The convention is documented here and will be enforced
-by the upload function, not by the database.
+object `path` inside the bucket, an optional `alt_text` and a `sort_order`.
+Paths follow `<organization_id>/<service_id>/<image_id>.<ext>`. The convention
+is documented here and will be enforced by the upload function, not by the
+database.
+
+`sort_order` is the position of an image within its service, lowest first. It
+defaults to 0 and is not unique, so images are read with
+`order by sort_order, created_at`.
+
+`service_id` references `services` with `on delete cascade`: deleting a service
+deletes its image rows. `service_id` can be changed by `service_role`; no
+trigger pins an image to its service.
 
 Access:
 
@@ -56,9 +64,12 @@ anonymous access agree.
   is easier to reason about than policies on a shared system table.
 - **Bucket defined only in `config.toml`.** A hosted project would not get it
   from `supabase db push`, and pgTAP could not assert its settings.
-- **Presentation columns now (`kind`, `sort_order`, `width`, `height`).** The
-  frontend design is undecided. Each is a small additive migration later, and
-  there is no production data to backfill.
+- **A unique `sort_order` per service.** Swapping two positions would need a
+  deferrable constraint or a transaction, which a single Data API call cannot
+  give. A tie-break on `created_at` keeps the order deterministic without it.
+- **More presentation columns now (`kind`, `width`, `height`).** The frontend
+  design is undecided. Each is a small additive migration later, and there is
+  no production data to backfill.
 
 ## Consequences
 
@@ -67,8 +78,14 @@ anonymous access agree.
 - A row and its object are written separately. The upload function must clean
   up when one of the two writes fails, and deleting a row does not delete the
   file.
-- Until a sort order exists, images are ordered by `created_at`, which `anon`
-  can therefore read on this table.
+- Deleting a service removes its image rows but leaves the files in the bucket.
+  Whatever deletes a service must also delete its objects, or they stay
+  publicly readable by URL.
+- If an image is moved to another service, its `path` still names the old
+  service. The path is an opaque object key: nothing may derive the service or
+  organization from it.
+- `anon` can read `created_at` on this table, unlike on the others, because it
+  breaks ties between images that share a `sort_order`.
 - The bucket's settings exist twice for local development: in the migration
   and in `config.toml`. The CLI overwrites the local bucket with the
   `config.toml` values, so the two must be kept identical. The pgTAP test

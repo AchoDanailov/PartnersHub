@@ -62,14 +62,15 @@ erDiagram
 
     service_images {
         uuid id PK "default gen_random_uuid()"
-        uuid service_id FK "references services.id, on delete restrict; immutable"
+        uuid service_id FK "references services.id, on delete cascade"
         text path UK "object key in the service-images bucket; not blank, no leading slash"
         text alt_text "nullable; not blank when present"
+        integer sort_order "default 0; not negative; position within the service, not unique"
         timestamptz created_at "default now()"
     }
 ```
 
-`service_images.path` points at an object in the public `service-images` Storage bucket. There is no foreign key into `storage.objects`; see `docs/adr/0003-store-service-images-in-a-public-bucket.md`.
+`service_images.path` points at an object in the public `service-images` Storage bucket. There is no foreign key into `storage.objects`, so deleting a row (directly or by deleting its service) leaves the file in the bucket; see `docs/adr/0003-store-service-images-in-a-public-bucket.md`.
 
 ## Enums
 

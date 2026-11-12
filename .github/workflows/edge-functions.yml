@@ -1,16 +1,28 @@
 name: Edge Functions
 
+# Runs on every push to every branch, so humans and agents get the same checks before a PR exists.
+# Same-repository PRs reuse the push run's checks on their head commit; only fork PRs run again.
 on:
+  push:
+    branches: ["**"]
+    paths:
+      - "supabase/functions/**"
+      - "supabase/migrations/**"
+      - "supabase/seed.sql"
+      - "supabase/config.toml"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/scripts/**"
+      - ".github/workflows/edge-functions.yml"
   pull_request:
     paths:
       - "supabase/functions/**"
-      - ".github/scripts/functions-task.sh"
-      - ".github/workflows/edge-functions.yml"
-  push:
-    branches: [main]
-    paths:
-      - "supabase/functions/**"
-      - ".github/scripts/functions-task.sh"
+      - "supabase/migrations/**"
+      - "supabase/seed.sql"
+      - "supabase/config.toml"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/scripts/**"
       - ".github/workflows/edge-functions.yml"
   workflow_dispatch:
 
@@ -27,6 +39,7 @@ env:
 jobs:
   unit:
     name: Check and unit tests
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -41,10 +54,69 @@ jobs:
           cache-hash: ${{ hashFiles('supabase/functions/deno.json', 'supabase/functions/deno.lock') }}
 
       - name: Restore dependencies
-        run: .github/scripts/functions-task.sh install
+        run: .github/scripts/functions-test-cmd-builder.sh install
 
       - name: Type-check functions
-        run: .github/scripts/functions-task.sh check
+        run: .github/scripts/functions-test-cmd-builder.sh check
 
       - name: Run unit tests
-        run: .github/scripts/functions-task.sh test
+        run: .github/scripts/functions-test-cmd-builder.sh test
+
+  integration:
+    name: Integration tests (local stack)
+    needs: unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      # Installs the Supabase CLI version pinned in the root package.json.
+      - name: Install Supabase CLI
+        run: npm ci
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: ${{ env.DENO_VERSION }}
+          cache: true
+          cache-hash: ${{ hashFiles('supabase/functions/deno.json', 'supabase/functions/deno.lock') }}
+
+      - name: Restore dependencies
+        run: .github/scripts/functions-test-cmd-builder.sh install
+
+      # Applies every migration and supabase/seed.sql. The Edge Runtime is started by
+      # `functions serve` below, the same way as locally.
+      - name: Start Supabase
+        run: npx supabase start -x studio,imgproxy,logflare,vector,edge-runtime
+
+      # Local-only demo credentials of the CI stack, read by the integration tests.
+      - name: Export local Supabase environment
+        run: |
+          eval "$(npx supabase status -o env)"
+          {
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_FUNCTIONS_URL=$API_URL/functions/v1"
+            echo "SUPABASE_DB_URL=$DB_URL"
+            echo "SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY"
+            echo "SUPABASE_SECRET_KEY=$SECRET_KEY"
+          } >> "$GITHUB_ENV"
+
+      - name: Serve Edge Functions
+        run: .github/scripts/serve-functions.sh
+
+      - name: Run integration tests
+        run: .github/scripts/functions-test-cmd-builder.sh test:integration
+
+      - name: Show Edge Runtime logs on failure
+        if: failure()
+        run: |
+          cat "$RUNNER_TEMP/functions-serve.log" || true
+          npx supabase status || true

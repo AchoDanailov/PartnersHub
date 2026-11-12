@@ -2,9 +2,13 @@
   "workspace": [
     "./soft-remove-organization-member"
   ],
+  "imports": {
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2.118.0"
+  },
   "tasks": {
     "check": "deno check soft-remove-organization-member/index.ts tests/",
-    "test": "deno test --allow-env tests/"
+    "test": "deno test --allow-env tests/",
+    "test:integration": "deno test --allow-env --allow-net=127.0.0.1:54321,localhost:54321 tests/**/*.integration-tests.ts"
   },
   "fmt": {
     "exclude": [

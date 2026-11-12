@@ -87,7 +87,7 @@ Use the helpers that already exist in `_shared/http.ts` rather than writing new 
 
 ## Tests
 
-CI runs `.github/scripts/functions-task.sh` from the `supabase/functions/` workspace root: `install`, then `check`, then `test`. These run the root `check` and `test` tasks in `supabase/functions/deno.json`, so a function is only checked and tested in CI if those tasks cover its `index.ts` and `tests/<fn>/` folder.
+CI runs `.github/scripts/functions-test-cmd-builder.sh` from the `supabase/functions/` workspace root: `install`, then `check`, then `test`. These run the root `check` and `test` tasks in `supabase/functions/deno.json`, so a function is only checked and tested in CI if those tasks cover its `index.ts` and `tests/<fn>/` folder.
 
 - **Permissions**: grant only what the tests need in the root `test` task, for example `--allow-read=./my-function/assets` for bundled files.
 
@@ -98,6 +98,35 @@ Writing the tests:
 - Test `app.fetch(...)` only for what `withSupabase` does (401s, the error shape), setting `SUPABASE_URL`, `SUPABASE_SECRET_KEYS` and `SUPABASE_PUBLISHABLE_KEYS` with `Deno.env.set` at the top of the file.
 - Cover every status the handler can return, the input limits, and every authorization rule the handler enforces. Assert the response body shape, not just the status.
 - Consume or cancel every response body (`await response.text()`). Deno's leak checker fails a test that leaves a body unread.
+
+### CI and integration tests
+
+`.github/workflows/edge-functions.yml` runs on every push to every branch, so agents get runtime feedback without Docker. It has two jobs:
+
+1. **Check and unit tests**: `install`, `check` and `test`, as described above.
+2. **Integration tests**: boots the local stack with migrations and `supabase/seed.sql`, serves every function through `.github/scripts/serve-functions.sh`, which fails on a boot error, then runs `test:integration`. To check each function booted, the script sends it an empty POST signed in as a seeded user (user JWT plus publishable key) and treats any non-5xx answer as up. A function must reject that empty body without side effects.
+
+A function is only served and integration-tested if it follows this layout:
+
+```
+supabase/
+  config.toml                          [functions.<fn>] entry
+  functions/
+    deno.json                          "<fn>" in "workspace"; <fn>/index.ts in the root `check` task
+    <fn>/
+    tests/<fn>/
+      index.test.ts                    unit tests (fake context)
+      index.integration-tests.ts       integration tests (live local stack)
+```
+
+- **Naming**: the `.integration-tests.ts` suffix keeps these files out of the unit `test` task. The root `test:integration` task picks up `tests/**/*.integration-tests.ts`.
+- **Env**: CI exports `SUPABASE_URL`, `SUPABASE_FUNCTIONS_URL`, `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY` from the local stack. Read them in the test and fail with a clear message when one is missing.
+- **Keep them few**, and leave edge cases to unit tests (see `docs/adr/0002-integration-tests-on-ci-against-a-local-stack.md`):
+  - one test per distinct integration (a new provider, a new Supabase service)
+  - at least one operation of each CRUD type the function performs
+  - one allowed caller and one rejected caller
+- **Data**: sign in as seeded users from `supabase/seed.sql` (password `password123`). Create any row the test changes or deletes in the test itself, so the seed isn't consumed and the file can be re-run.
+- **Model**: `tests/soft-remove-organization-member/index.integration-tests.ts`.
 
 ## Validation
 
@@ -124,6 +153,8 @@ After any change under `supabase/functions/`, run these and fix what they report
        ```
      - Serve in the background with `npx supabase functions serve` (add `--env-file supabase/functions/<fn>/.env` if the function needs local secrets). Use `curl` on the changed function to confirm it boots and returns the expected status and body for a success case and one or two error cases. Stop the server afterwards.
      - If a smoke test needs a real user, sign one up on the local stack, then delete it through the admin API afterwards.
+
+3. **No Docker** (for example, a cloud agent): push the branch and use the Edge Functions workflow as the runtime check. Read its result before reporting.
 
 When you report back, say which of these steps ran and which didn't. "Static checks pass, runtime check skipped because Docker Desktop is down" is a useful report; "done" is not.
 

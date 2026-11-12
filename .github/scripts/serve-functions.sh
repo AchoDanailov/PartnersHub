@@ -18,7 +18,7 @@ trap 'rm -f "$body_file"' EXIT
 eval "$(npx supabase status -o env)"
 # FUNCTIONS_URL is only reported while the Edge Runtime runs, so derive it from the API URL.
 functions_url="$API_URL/functions/v1"
-anon_key="$ANON_KEY"
+publishable_key="$PUBLISHABLE_KEY"
 
 mapfile -t functions < <("$script_dir/functions-task.sh" list)
 if [[ ${#functions[@]} -eq 0 ]]; then
@@ -33,9 +33,9 @@ for name in "${functions[@]}"; do
   echo "Waiting for $name..."
   code=000
   for _ in $(seq 1 60); do
-    # The legacy anon key is a JWT, so it passes verify_jwt; any answer from the function means it booted.
+    # Any answer from the function (even a 401 for the non-JWT publishable key) means it booted.
     code="$(curl -s -o "$body_file" -w '%{http_code}' -X POST \
-      -H "Authorization: Bearer $anon_key" -H "apikey: $anon_key" \
+      -H "apikey: $publishable_key" \
       "$functions_url/$name" || true)"
     if grep -qE '"code": ?"(BOOT|WORKER)_ERROR"' "$body_file"; then
       echo "::error::$name failed to start: $(cat "$body_file")"

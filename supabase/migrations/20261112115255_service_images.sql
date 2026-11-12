@@ -1,8 +1,6 @@
--- Public bucket for service images. Objects are downloaded by plain URL.
--- There are deliberately no policies on storage.objects: anon and authenticated
--- can neither list nor write, and only server code using service_role uploads.
--- supabase/config.toml mirrors these settings so the CLI can upload the local
--- seed files; keep the two in sync.
+-- Public bucket: files download by plain URL. No storage.objects policies on
+-- purpose, so only service_role lists and writes.
+-- Keep supabase/config.toml identical: the CLI overwrites the local bucket from it.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
   'service-images',
@@ -13,29 +11,25 @@ values (
 );
 
 
--- One row per image of a service. `path` is the object key inside the
--- service-images bucket, by convention <organization_id>/<service_id>/<image_id>.<ext>.
--- Deleting a service deletes its image rows; the objects stay in the bucket.
--- `sort_order` is the position of the image within its service, lowest first.
--- It is not unique: read with `order by sort_order, created_at`.
+-- One row per image. `path` is the object key in the service-images bucket:
+-- <organization_id>/<service_id>/<image_id>.<ext>. Deleting a row leaves the file.
 create table public.service_images (
   id uuid primary key default gen_random_uuid(),
   service_id uuid not null references public.services (id) on delete cascade,
   path text not null unique,
   alt_text text,
-  sort_order integer not null default 0,
+  sort_order integer not null,
   created_at timestamptz not null default now(),
   constraint service_images_path_not_blank check (char_length(btrim(path)) > 0),
   constraint service_images_path_no_leading_slash check (path !~ '^/'),
   constraint service_images_alt_text_not_blank check (
     alt_text is null or char_length(btrim(alt_text)) > 0
   ),
-  constraint service_images_sort_order_not_negative check (sort_order >= 0)
+  constraint service_images_sort_order_not_negative check (sort_order >= 0),
+  -- Deferrable, so one update can swap positions. Its index also covers the foreign key.
+  constraint service_images_service_id_sort_order_key
+    unique (service_id, sort_order) deferrable
 );
-
--- Covers the foreign key and reading the images of a service in order.
-create index service_images_service_id_sort_order_idx
-  on public.service_images (service_id, sort_order);
 
 
 create function private.ensure_service_image_organization_active()
@@ -69,9 +63,7 @@ revoke all on function private.ensure_service_image_organization_active() from p
 
 revoke all on table public.service_images from anon, authenticated;
 
--- created_at is exposed to anon, unlike on other tables: it breaks ties between
--- images of a service that share a sort_order.
-grant select (id, service_id, path, alt_text, sort_order, created_at) on table public.service_images to anon;
+grant select (id, service_id, path, alt_text, sort_order) on table public.service_images to anon;
 grant select on table public.service_images to authenticated;
 grant select, insert, update, delete on table public.service_images to service_role;
 

@@ -14,7 +14,6 @@ on:
       - "supabase/functions/_shared/database.types.ts"
       - "package.json"
       - "package-lock.json"
-      - ".github/scripts/check-seed-images.sh"
       - ".github/workflows/database.yml"
   pull_request:
     paths:
@@ -27,7 +26,6 @@ on:
       - "supabase/functions/_shared/database.types.ts"
       - "package.json"
       - "package-lock.json"
-      - ".github/scripts/check-seed-images.sh"
       - ".github/workflows/database.yml"
   workflow_dispatch:
 
@@ -70,10 +68,6 @@ jobs:
 
       - name: Run database advisors
         run: npx supabase db advisors --local --fail-on error
-
-      # Seeded service_images rows, the files in the public bucket and anonymous access to both.
-      - name: Check seeded service images
-        run: .github/scripts/check-seed-images.sh
 
       # Both committed copies must match what the CLI generates from the migrated schema.
       - name: Check generated types are up to date

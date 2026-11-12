@@ -11,19 +11,20 @@
 --   a2000000-... users (auth.users, auth.identities, profiles, organization_members)
 --   a4000000-... services
 --   a5000000-... vouchers
+--   a6000000-... service images
 --
 -- Alpine Wellness
 --   admin:    admin@alpine.example.com
 --   staff:    staff-1@alpine.example.com, staff-2@alpine.example.com
---   services: Massage, Sauna
+--   services: Massage (3 images), Sauna (2 images)
 -- Harbor Fitness
 --   admin:    admin@harbor.example.com
 --   staff:    staff-1@harbor.example.com
---   services: Day Pass
+--   services: Day Pass (2 images)
 -- Cedar Studio
 --   admin:    admin@cedar.example.com
 --   staff:    staff-1@cedar.example.com
---   services: Yoga Class, Pilates Class
+--   services: Yoga Class (1 image), Pilates Class (no images)
 
 insert into public.organizations (id, name)
 values
@@ -165,3 +166,21 @@ values
   ('a5000000-0000-0000-0000-000000000012', 'CEDAR-PILATES-0001', 'a4000000-0000-0000-0000-000000000005', 'active', current_date + 90, now(), null, null),
   ('a5000000-0000-0000-0000-000000000013', 'CEDAR-PILATES-0002', 'a4000000-0000-0000-0000-000000000005', 'cancelled', current_date + 90, now(), null, null),
   ('a5000000-0000-0000-0000-000000000014', 'CEDAR-PILATES-0003', 'a4000000-0000-0000-0000-000000000005', 'active', current_date - 30, now() - interval '60 days', null, null);
+
+-- Service images. Each path is an object in the public service-images bucket,
+-- following <organization_id>/<service_id>/<image_id>.<ext>. The files live in
+-- supabase/seed/service-images and are uploaded by the CLI (see the
+-- [storage.buckets.service-images] block in config.toml). They are original
+-- illustrations drawn for this repository: no real logos, brands or photos.
+-- `created_at` is staggered so ordering by it is stable. Pilates Class has no
+-- images on purpose, to cover the empty state.
+insert into public.service_images (id, service_id, path, alt_text, created_at)
+values
+  ('a6000000-0000-0000-0000-000000000001', 'a4000000-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-000000000001/a4000000-0000-0000-0000-000000000001/a6000000-0000-0000-0000-000000000001.jpg', 'Smooth dark massage stones stacked beside a rolled white towel, with mountains in the background', now() - interval '8 minutes'),
+  ('a6000000-0000-0000-0000-000000000002', 'a4000000-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-000000000001/a4000000-0000-0000-0000-000000000001/a6000000-0000-0000-0000-000000000002.png', 'Massage table with folded towels in a bright room with plants and a mountain view', now() - interval '7 minutes'),
+  ('a6000000-0000-0000-0000-000000000003', 'a4000000-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-000000000001/a4000000-0000-0000-0000-000000000001/a6000000-0000-0000-0000-000000000003.jpg', 'Massage oil bottles, a jar and a lit candle on a wooden shelf', now() - interval '6 minutes'),
+  ('a6000000-0000-0000-0000-000000000004', 'a4000000-0000-0000-0000-000000000002', 'a1000000-0000-0000-0000-000000000001/a4000000-0000-0000-0000-000000000002/a6000000-0000-0000-0000-000000000004.jpg', 'Wooden sauna benches with folded towels, a birch whisk and a water bucket', now() - interval '5 minutes'),
+  ('a6000000-0000-0000-0000-000000000005', 'a4000000-0000-0000-0000-000000000002', 'a1000000-0000-0000-0000-000000000001/a4000000-0000-0000-0000-000000000002/a6000000-0000-0000-0000-000000000005.png', 'Sauna stove with hot stones and rising steam, next to a wooden bucket and ladle', now() - interval '4 minutes'),
+  ('a6000000-0000-0000-0000-000000000006', 'a4000000-0000-0000-0000-000000000003', 'a1000000-0000-0000-0000-000000000002/a4000000-0000-0000-0000-000000000003/a6000000-0000-0000-0000-000000000006.png', 'Rack of dumbbells with an exercise ball and two kettlebells in a gym', now() - interval '3 minutes'),
+  ('a6000000-0000-0000-0000-000000000007', 'a4000000-0000-0000-0000-000000000003', 'a1000000-0000-0000-0000-000000000002/a4000000-0000-0000-0000-000000000003/a6000000-0000-0000-0000-000000000007.jpg', 'Treadmill facing a large window with a view of the sea, a sailboat and a lighthouse at sunrise', now() - interval '2 minutes'),
+  ('a6000000-0000-0000-0000-000000000008', 'a4000000-0000-0000-0000-000000000004', 'a1000000-0000-0000-0000-000000000003/a4000000-0000-0000-0000-000000000004/a6000000-0000-0000-0000-000000000008.jpg', 'Yoga mat with a meditation cushion and blocks in a sunlit studio with an arched window', now() - interval '1 minutes');

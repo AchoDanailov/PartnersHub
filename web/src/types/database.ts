@@ -59,6 +59,26 @@ isOneToOne: true
                   Relationships: [
                     
                   ]
+                },"service_images": {
+                  Row: {
+                    "alt_text": string | null,"created_at": string,"id": string,"path": string,"service_id": string,"sort_order": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "alt_text"?: string | null,"created_at"?: string,"id"?: string,"path": string,"service_id": string,"sort_order"?: number
+                  }
+                  Update: {
+                    "alt_text"?: string | null,"created_at"?: string,"id"?: string,"path"?: string,"service_id"?: string,"sort_order"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "service_images_service_id_fkey"
+      columns: ["service_id"]
+isOneToOne: false
+      referencedRelation: "services"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"services": {
                   Row: {
                     "created_at": string,"id": string,"name": string,"organization_id": string

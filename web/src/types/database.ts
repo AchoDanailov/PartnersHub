@@ -101,14 +101,14 @@ isOneToOne: false
                   ]
                 },"vouchers": {
                   Row: {
-                    "created_at": string,"expires_on": string,"id": string,"redeemed_at": string | null,"redeemed_by": string | null,"redemption_code": string,"service_id": string,"status": Database["public"]['Enums']["voucher_status"]
+                    "created_at": string,"expires_on": string,"id": string,"redeemed_at": string | null,"redeemed_by": string | null,"redemption_code": string,"service_id": string,"shopify_line_item_id": string | null,"shopify_line_item_unit": number | null,"shopify_order_id": string | null,"status": Database["public"]['Enums']["voucher_status"]
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"expires_on": string,"id"?: string,"redeemed_at"?: string | null,"redeemed_by"?: string | null,"redemption_code": string,"service_id": string,"status"?: Database["public"]['Enums']["voucher_status"]
+                    "created_at"?: string,"expires_on": string,"id"?: string,"redeemed_at"?: string | null,"redeemed_by"?: string | null,"redemption_code": string,"service_id": string,"shopify_line_item_id"?: string | null,"shopify_line_item_unit"?: number | null,"shopify_order_id"?: string | null,"status"?: Database["public"]['Enums']["voucher_status"]
                   }
                   Update: {
-                    "created_at"?: string,"expires_on"?: string,"id"?: string,"redeemed_at"?: string | null,"redeemed_by"?: string | null,"redemption_code"?: string,"service_id"?: string,"status"?: Database["public"]['Enums']["voucher_status"]
+                    "created_at"?: string,"expires_on"?: string,"id"?: string,"redeemed_at"?: string | null,"redeemed_by"?: string | null,"redemption_code"?: string,"service_id"?: string,"shopify_line_item_id"?: string | null,"shopify_line_item_unit"?: number | null,"shopify_order_id"?: string | null,"status"?: Database["public"]['Enums']["voucher_status"]
                   }
                   Relationships: [
                     {

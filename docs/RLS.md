@@ -38,6 +38,11 @@ Service image files live in the **public** bucket `service-images` (5 MiB per fi
 - A public bucket skips access control for downloads only. Anyone who has a URL can read the file, so nothing private may be stored in this bucket.
 - The frontend builds the URL from the row: `supabase.storage.from('service-images').getPublicUrl(path)`.
 
+Voucher QR codes live in the **private** bucket `generated-qrs` (1 MiB per file; PNG only), at `<voucher_id>.png`.
+
+- Only `service_role` can download, list or write them; there is no public URL.
+- A QR code contains the voucher's redemption code, so it is as sensitive as `vouchers.redemption_code`.
+
 ---
 
 ## Write access
@@ -55,4 +60,5 @@ Service image files live in the **public** bucket `service-images` (5 MiB per fi
 
 - **Full access to all tables, and bypasses RLS**
 - **Service images** - only `service_role` writes `service_images` rows and objects in the `service-images` bucket. Upload Edge Functions will do both.
+- **Issuing vouchers** - only `service_role` creates `vouchers` rows and objects in the `generated-qrs` bucket. The `issue-voucher` Edge Function does both. Its caller is not a Supabase user: it sends a secret that only this function accepts (`docs/adr/0004-issue-vouchers-through-a-shared-secret-webhook.md`).
 - **Removing organization member** - `public.remove_organization_member(p_actor_id, p_user_id)` (RPC, only `service_role` can call): called by the `soft-remove-organization-member` Edge Function or an operator. `p_actor_id` must be the current admin of the staff member's organization, for every caller. The Edge Function then uses the Admin API to soft delete the user (from the `auth` table), thus releasing the email to be used again in a different organization.

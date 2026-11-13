@@ -5,6 +5,7 @@ Sources:
 - `supabase/migrations/20261029211310_initial_data_layer.sql`
 - `supabase/migrations/20261102223932_soft_deletion.sql`
 - `supabase/migrations/20261112115255_service_images.sql`
+- `supabase/migrations/20261113180000_voucher_issuance.sql`
 
 ```mermaid
 erDiagram
@@ -51,13 +52,16 @@ erDiagram
 
     vouchers {
         uuid id PK "default gen_random_uuid()"
-        text redemption_code UK "not blank"
+        text redemption_code UK "not blank; clear text; issued codes are BLV- plus 6 uppercase letters or digits"
         uuid service_id FK "references services.id, on delete restrict"
         date expires_on "not before the created_at date (UTC)"
         timestamptz created_at "default now()"
         voucher_status status "active, redeemed or cancelled; default active"
         uuid redeemed_by FK "nullable; references organization_members.user_id, on delete restrict"
         timestamptz redeemed_at "nullable"
+        text shopify_order_id "nullable; digits only"
+        text shopify_line_item_id "nullable; digits only"
+        integer shopify_line_item_unit "nullable; 1 or more; which unit of the line item"
     }
 
     service_images {
@@ -71,6 +75,8 @@ erDiagram
 ```
 
 `service_images.path` points at an object in the public `service-images` Storage bucket. There is no foreign key into `storage.objects`, so deleting a row (directly or by deleting its service) leaves the file in the bucket; see `docs/adr/0003-store-service-images-in-a-public-bucket.md`.
+
+The three `vouchers.shopify_*` columns say which sale a voucher came from. They are all set or all null, and unique together, so the `issue-voucher` Edge Function can be called again for the same sale without creating a second voucher. Each issued voucher has a QR code at `<voucher_id>.png` in the private `generated-qrs` Storage bucket; see `docs/adr/0004-issue-vouchers-through-a-shared-secret-webhook.md`.
 
 ## Enums
 

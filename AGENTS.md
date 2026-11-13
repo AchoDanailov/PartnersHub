@@ -7,6 +7,7 @@ Partners Hub is a local-first React and Supabase platform where our business par
 - `web/`: self-contained Vite frontend with its own dependencies and lockfile; it can be used as the hosting project root. Generated database types live in `web/src/types/database.ts`.
 - `supabase/`: local Supabase configuration, database migrations, pgTAP tests, and Edge Functions. Follow the `edge-functions` skill when writing or changing Edge Functions.
 - `supabase/seed.sql`: local and CI seed data, loaded after migrations by `npx supabase start` and `npx supabase db reset`. It holds three organizations with fixed IDs (`a1000000-...` organizations, `a2000000-...` users, `a4000000-...` services, `a5000000-...` vouchers, `a6000000-...` service images). Every seeded user signs in with the local-only password `password123`. pgTAP tests must not assume the database is empty.
+- `supabase/functions/.env.example`: local-only secrets for the Edge Functions (`VOUCHER_ISSUER_SECRET`, `WEB_APP_URL`). Copy it to the ignored `supabase/functions/.env`; CI uses the example values as they are.
 - `supabase/seed/service-images/`: files for the `service-images` bucket, matching the `service_images` rows in `seed.sql`. Original JPEG, PNG, WebP or AVIF images only (`docs/adr/0003-store-service-images-in-a-public-bucket.md`).
 - `docs/`: project documentation
 - `.github/`: GitHub Actions workflows and CI helper scripts (`.github/scripts/`). The Database and Edge Functions workflows run on every push to every branch; the Database workflow also checks that both generated type files are up to date; the Edge Functions workflow boots the local stack and runs the integration tests (`docs/adr/0002-integration-tests-on-ci-against-a-local-stack.md`).
@@ -32,7 +33,9 @@ npx supabase db advisors --local
 npx supabase seed buckets --local   # re-upload supabase/seed/service-images without a reset
 npx supabase gen types typescript --local --schema public > web/src/types/database.ts
 npx supabase gen types typescript --local --schema public > supabase/functions/_shared/database.types.ts
+cp supabase/functions/.env.example supabase/functions/.env   # once; local function secrets
 npx supabase functions serve soft-remove-organization-member
+npx supabase functions serve issue-voucher --env-file supabase/functions/.env
 .github/scripts/serve-functions.sh   # serve all functions and wait until they boot
 
 # from supabase/functions/ (all functions) or a function's directory (that function only)
@@ -57,6 +60,7 @@ Local Studio is available at `http://127.0.0.1:54323` while the Supabase stack i
 - Never use `user_metadata` for authorization decisions.
 - Never expose service-role or secret keys in `web/` or `VITE_*` variables.
 - Perform explicit authentication and authorization checks in Edge Functions.
+- Never give a Supabase secret key to an outside caller; it acts as `service_role`. A machine caller gets a secret only its function accepts (`docs/adr/0004-issue-vouchers-through-a-shared-secret-webhook.md`).
 - Work locally by default. Do not link, push, deploy, or otherwise mutate a hosted Supabase project without an explicit user request.
 
 ## Verification and changes

@@ -10,12 +10,15 @@
 #   The probe user is $PROBE_USER_EMAIL / $PROBE_USER_PASSWORD
 #   (default: admin@alpine.example.com / password123 from supabase/seed.sql).
 #   Fails when a function reports BOOT_ERROR/WORKER_ERROR or does not answer in time.
+#   Functions get the secrets in $FUNCTIONS_ENV_FILE (default: supabase/functions/.env) when
+#   that file exists; copy supabase/functions/.env.example to create it.
 #   The serve log is written to $SERVE_LOG (default: ${RUNNER_TEMP:-/tmp}/functions-serve.log);
 #   the server keeps running after this script exits. Stop it with `pkill -f "supabase functions serve"`.
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 serve_log="${SERVE_LOG:-${RUNNER_TEMP:-/tmp}/functions-serve.log}"
+functions_env_file="${FUNCTIONS_ENV_FILE:-supabase/functions/.env}"
 body_file="$(mktemp)"
 trap 'rm -f "$body_file"' EXIT
 
@@ -42,7 +45,13 @@ if [[ -z "$user_jwt" ]]; then
   exit 1
 fi
 
-nohup npx supabase functions serve > "$serve_log" 2>&1 &
+# Function secrets (see supabase/functions/.env.example). Passed explicitly when the file exists.
+serve_args=()
+if [[ -f "$functions_env_file" ]]; then
+  serve_args+=(--env-file "$functions_env_file")
+fi
+
+nohup npx supabase functions serve "${serve_args[@]}" > "$serve_log" 2>&1 &
 echo "Serving Edge Functions (log: $serve_log)"
 
 for name in "${functions[@]}"; do

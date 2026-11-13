@@ -69,7 +69,7 @@ Use the helpers that already exist in `_shared/http.ts` rather than writing new 
 - **Input**: validate everything from the request and give the body a byte limit through `readJsonBody`. Normalise identifiers (for example, lowercase UUIDs) before comparing them.
 - **Idempotency**: when a retry is likely (network failure after a write), make the operation safe to repeat and say so in the handler's doc comment.
 - **Dependencies**: pin npm versions exactly in the function's `deno.json` (`"npm:@supabase/server@1.9.2"`) and import them by bare name. Test-only packages go in the workspace root `deno.json`, not the function's.
-- **Secrets**: read them from env, keep them in ignored local `.env` files, and never commit them or put them in `web/` or `VITE_*` variables.
+- **Secrets**: read them from env, and never commit real ones or put them in `web/` or `VITE_*` variables. Local values live in the ignored `supabase/functions/.env`, copied from the committed `supabase/functions/.env.example`, which holds local-only values that CI also uses. Add every new variable to that example, and never use a Supabase secret key as a credential for an outside caller.
 
 ## Registering a new function
 
@@ -120,7 +120,7 @@ supabase/
 ```
 
 - **Naming**: the `.integration-tests.ts` suffix keeps these files out of the unit `test` task. The root `test:integration` task picks up `tests/**/*.integration-tests.ts`.
-- **Env**: CI exports `SUPABASE_URL`, `SUPABASE_FUNCTIONS_URL`, `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY` from the local stack. Read them in the test and fail with a clear message when one is missing.
+- **Env**: CI exports `SUPABASE_URL`, `SUPABASE_FUNCTIONS_URL`, `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY` from the local stack, plus every variable in `supabase/functions/.env.example`. Read them in the test and fail with a clear message when one is missing.
 - **Keep them few**, and leave edge cases to unit tests (see `docs/adr/0002-integration-tests-on-ci-against-a-local-stack.md`):
   - one test per distinct integration (a new provider, a new Supabase service)
   - at least one operation of each CRUD type the function performs
@@ -151,7 +151,7 @@ After any change under `supabase/functions/`, run these and fix what they report
        npx supabase gen types typescript --local --schema public > supabase/functions/_shared/database.types.ts
        npx supabase gen types typescript --local --schema public > web/src/types/database.ts
        ```
-     - Serve in the background with `npx supabase functions serve` (add `--env-file supabase/functions/<fn>/.env` if the function needs local secrets). Use `curl` on the changed function to confirm it boots and returns the expected status and body for a success case and one or two error cases. Stop the server afterwards.
+     - Serve in the background with `npx supabase functions serve` (add `--env-file supabase/functions/.env` if the function needs local secrets). Use `curl` on the changed function to confirm it boots and returns the expected status and body for a success case and one or two error cases. Stop the server afterwards.
      - If a smoke test needs a real user, sign one up on the local stack, then delete it through the admin API afterwards.
 
 3. **No Docker** (for example, a cloud agent): push the branch and use the Edge Functions workflow as the runtime check. Read its result before reporting.

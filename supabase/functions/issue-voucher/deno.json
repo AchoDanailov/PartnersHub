@@ -1,0 +1,11 @@
+{
+  "imports": {
+    "@supabase/server": "npm:@supabase/server@1.9.2",
+    "qrcode": "npm:qrcode@1.5.4"
+  },
+  "tasks": {
+    "check": "deno check index.ts ../tests/issue-voucher/",
+    "test": "deno test --allow-env ../tests/issue-voucher/",
+    "test:integration": "deno test --allow-env --allow-net=127.0.0.1:54321,localhost:54321 ../tests/issue-voucher/*.integration-tests.ts"
+  }
+}

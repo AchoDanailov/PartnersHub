@@ -109,6 +109,13 @@ jobs:
             echo "SUPABASE_SECRET_KEY=$SECRET_KEY"
           } >> "$GITHUB_ENV"
 
+      # Local-only function secrets from the committed example. The served functions read the
+      # file; the integration tests read the same values from the environment.
+      - name: Create local function secrets
+        run: |
+          cp supabase/functions/.env.example supabase/functions/.env
+          grep -Ev '^[[:space:]]*(#|$)' supabase/functions/.env >> "$GITHUB_ENV"
+
       - name: Serve Edge Functions
         run: .github/scripts/serve-functions.sh
 

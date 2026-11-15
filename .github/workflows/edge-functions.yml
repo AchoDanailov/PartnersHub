@@ -108,8 +108,13 @@ jobs:
       # The local served functions read the file;
       # The integration tests read the same values from the environment. (0002-integration-tests-on-ci-against-a-local-stack.md)
       # "grep -Ev '^[[:space:]]*(#|$)'" - removes comments and empty lines.
+      # Skipped when the file is empty: grep fails when it selects no lines.
       - name: Create local function secrets
         run: |
+          if [ ! -s supabase/functions/.env.example ]; then
+            echo "supabase/functions/.env.example is empty; no function secrets to set."
+            exit 0
+          fi
           cp supabase/functions/.env.example supabase/functions/.env
           grep -Ev '^[[:space:]]*(#|$)' supabase/functions/.env >> "$GITHUB_ENV"
 

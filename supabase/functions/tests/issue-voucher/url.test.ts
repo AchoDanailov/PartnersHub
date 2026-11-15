@@ -5,6 +5,7 @@ import {
 } from "../../issue-voucher/helpers/url.ts";
 
 const SERVICE_ID = "a4000000-0000-0000-0000-000000000001";
+const QR_TOKEN = "c7000000-0000-4000-8000-000000000001";
 
 function withWebAppUrl<T>(value: string | undefined, run: () => T): T {
   const previous = Deno.env.get("WEB_APP_URL");
@@ -18,13 +19,13 @@ function withWebAppUrl<T>(value: string | undefined, run: () => T): T {
   }
 }
 
-Deno.test("builds the service page URL with the code", () => {
+Deno.test("builds the service page URL with the QR token", () => {
   for (
     const base of ["https://app.example.com", "https://app.example.com/"]
   ) {
     assert.equal(
-      buildRedemptionUrl(new URL(base), SERVICE_ID, "BLV-7K2QX9"),
-      `https://app.example.com/services/${SERVICE_ID}?code=BLV-7K2QX9`,
+      buildRedemptionUrl(new URL(base), SERVICE_ID, QR_TOKEN),
+      `https://app.example.com/services/${SERVICE_ID}?t=${QR_TOKEN}`,
     );
   }
 });
@@ -34,9 +35,9 @@ Deno.test("keeps a path prefix of the web app URL", () => {
     buildRedemptionUrl(
       new URL("https://example.com/hub"),
       SERVICE_ID,
-      "BLV-7K2QX9",
+      QR_TOKEN,
     ),
-    `https://example.com/hub/services/${SERVICE_ID}?code=BLV-7K2QX9`,
+    `https://example.com/hub/services/${SERVICE_ID}?t=${QR_TOKEN}`,
   );
 });
 

@@ -1,14 +1,16 @@
 # Issue Voucher Edge Function
 
 Creates a voucher for a service: generates its redemption code, saves it, and
-stores a QR code that opens the service page with that code:
+stores a QR code that opens the service page with the voucher's QR token:
 
 ```text
-<WEB_APP_URL>/services/<service_id>?code=BLV-7K2QX9
+<WEB_APP_URL>/services/<service_id>?t=<qr_token>
 ```
 
-A redemption code is `BLV-` followed by 6 uppercase letters or digits, stored
-as clear text in `vouchers.redemption_code`.
+- A redemption code is `BLV-` followed by 6 uppercase letters or digits, stored
+  as clear text in `vouchers.redemption_code`.
+- A QR token is a random UUID that the database generates in
+  `vouchers.qr_token`. The QR code carries the token.
 
 ## Endpoint
 
@@ -35,8 +37,8 @@ X-Voucher-Issuer-Secret: <issuer secret>
 - `200`: a voucher with this `idempotencyKey` already existed and is returned.
 
 Both carry `{ "voucherId", "serviceId", "expiresOn", "qrPath" }`. The
-redemption code is not in the response; it is in the database row and the QR
-code.
+redemption code and the QR token are not in the response, only in the database
+row.
 
 - `400` `INVALID_REQUEST`: a `Content-Type` other than `application/json`, a
   body over 1 KB, malformed JSON, or an invalid field.
@@ -68,9 +70,8 @@ same key never creates a second voucher, and it stores the QR code again.
 
 ## QR codes
 
-A 512×512 PNG at `<voucher_id>.png` in the private bucket `generated-qrs`. Only
-`service_role` can read or write it. It contains the redemption code, so treat
-it like the code itself.
+A PNG of about 512 px at `<voucher_id>.png` in the private bucket `generated-qrs`. Only
+`service_role` can read or write it. It contains the voucher's QR token.
 
 ## Configuration
 

@@ -21,7 +21,7 @@ import type { SaveVoucherResult } from "./types/vouchers.ts";
 
 /**
  * Issues a voucher: generates its redemption code, saves it, and stores a QR
- * code that opens the service page with that code.
+ * code that opens the service page with the voucher's QR token.
  *
  * `withSupabase` runs with `auth: "none"`, so this handler authenticates the
  * caller itself, through the issuer secret header, before anything else.
@@ -102,7 +102,7 @@ export async function handleIssueVoucher(
       buildRedemptionUrl(
         webAppUrl,
         voucher.service_id,
-        voucher.redemption_code,
+        voucher.qr_token,
       ),
     );
   } catch (error) {

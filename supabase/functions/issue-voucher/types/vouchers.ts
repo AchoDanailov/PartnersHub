@@ -2,7 +2,7 @@ import type { Tables } from "../../_shared/database.types.ts";
 
 export type IssuedVoucher = Pick<
   Tables<"vouchers">,
-  "id" | "redemption_code" | "service_id" | "expires_on"
+  "id" | "service_id" | "expires_on" | "qr_token"
 >;
 
 export type ServiceLookup =

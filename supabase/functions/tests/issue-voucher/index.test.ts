@@ -8,6 +8,8 @@ const WEB_APP_URL = "http://localhost:5173";
 const ORGANIZATION_ID = "a1000000-0000-0000-0000-000000000001";
 const SERVICE_ID = "a4000000-0000-0000-0000-000000000001";
 const VOUCHER_ID = "a5000000-0000-0000-0000-0000000000aa";
+const QR_TOKEN = "c7000000-0000-4000-8000-000000000001";
+const EXISTING_QR_TOKEN = "c7000000-0000-4000-8000-000000000002";
 const EXPIRES_ON = "2099-12-31";
 const IDEMPOTENCY_KEY = "b6000000-0000-4000-8000-000000000001";
 
@@ -19,7 +21,7 @@ const BODY = {
 };
 const EXISTING = {
   id: VOUCHER_ID,
-  redemption_code: "BLV-FIRST1",
+  qr_token: EXISTING_QR_TOKEN,
   service_id: SERVICE_ID,
   expires_on: EXPIRES_ON,
 };
@@ -110,7 +112,7 @@ function createContext(options: {
                 inserts.shift() ?? {
                   data: [{
                     id: VOUCHER_ID,
-                    redemption_code: row.redemption_code,
+                    qr_token: QR_TOKEN,
                     service_id: row.service_id,
                     expires_on: row.expires_on,
                   }],
@@ -355,7 +357,7 @@ Deno.test("creates a voucher and stores its QR code", async () => {
   assert.deepEqual(upload.options, { contentType: "image/png", upsert: true });
   assert.equal(
     decodeQr(upload.body).text,
-    `${WEB_APP_URL}/services/${SERVICE_ID}?code=${row.redemption_code}`,
+    `${WEB_APP_URL}/services/${SERVICE_ID}?t=${QR_TOKEN}`,
   );
 });
 
@@ -376,7 +378,7 @@ Deno.test("a repeated call returns the first voucher and stores its QR code agai
   assert.deepEqual(calls.existingLookups, [IDEMPOTENCY_KEY]);
   assert.equal(
     decodeQr(calls.uploads[0].body).text,
-    `${WEB_APP_URL}/services/${SERVICE_ID}?code=BLV-FIRST1`,
+    `${WEB_APP_URL}/services/${SERVICE_ID}?t=${EXISTING_QR_TOKEN}`,
   );
 });
 

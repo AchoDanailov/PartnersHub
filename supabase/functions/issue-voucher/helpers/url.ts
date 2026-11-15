@@ -20,16 +20,16 @@ export function readWebAppUrl(): URL {
   return url;
 }
 
-/** `<web app>/services/<serviceId>?code=<code>`: the page a voucher QR code opens. */
+/** `<web app>/services/<serviceId>?t=<qrToken>`: the page a voucher QR code opens. */
 export function buildRedemptionUrl(
   webAppUrl: URL,
   serviceId: string,
-  code: string,
+  qrToken: string,
 ): string {
   const base = webAppUrl.href.endsWith("/")
     ? webAppUrl.href
     : `${webAppUrl.href}/`;
   const destination = new URL(`services/${serviceId}`, base);
-  destination.searchParams.set("code", code);
+  destination.searchParams.set("t", qrToken);
   return destination.toString();
 }

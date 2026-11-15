@@ -1,5 +1,5 @@
 begin;
-select plan(12);
+select plan(18);
 
 insert into public.organizations (id, name)
 values ('13000000-0000-0000-0000-000000000001', 'Issuance Organization One');
@@ -7,24 +7,32 @@ values ('13000000-0000-0000-0000-000000000001', 'Issuance Organization One');
 insert into public.services (id, organization_id, name)
 values ('43000000-0000-0000-0000-000000000001', '13000000-0000-0000-0000-000000000001', 'Issuance Service One');
 
-insert into public.vouchers (id, redemption_code, service_id, expires_on, idempotency_key)
+insert into public.vouchers (id, redemption_code, service_id, expires_on, idempotency_key, qr_token)
 values (
   '53000000-0000-0000-0000-000000000001',
   'VI-CODE-1',
   '43000000-0000-0000-0000-000000000001',
   '2099-12-31',
-  '63000000-0000-0000-0000-000000000001'
+  '63000000-0000-0000-0000-000000000001',
+  '73000000-0000-0000-0000-000000000001'
 );
 
 -- Schema and privileges
 
 select has_column('public', 'vouchers', 'idempotency_key', 'vouchers has idempotency_key');
 select col_not_null('public', 'vouchers', 'idempotency_key', 'idempotency_key is required');
+select has_column('public', 'vouchers', 'qr_token', 'vouchers has qr_token');
+select col_not_null('public', 'vouchers', 'qr_token', 'qr_token is required');
 
 select ok(
   not has_column_privilege('anon', 'public.vouchers', 'idempotency_key', 'select')
   and not has_column_privilege('authenticated', 'public.vouchers', 'idempotency_key', 'select'),
   'anonymous and signed-in users cannot read the idempotency key'
+);
+select ok(
+  not has_column_privilege('anon', 'public.vouchers', 'qr_token', 'select')
+  and not has_column_privilege('authenticated', 'public.vouchers', 'qr_token', 'select'),
+  'anonymous and signed-in users cannot read the QR token'
 );
 select ok(
   not has_table_privilege('anon', 'public.vouchers', 'insert')
@@ -42,6 +50,17 @@ select isnt(
   (select idempotency_key from public.vouchers where id = '53000000-0000-0000-0000-000000000002'),
   null,
   'a voucher created without a key gets one'
+);
+select isnt(
+  (select qr_token from public.vouchers where id = '53000000-0000-0000-0000-000000000002'),
+  null,
+  'a voucher gets a QR token by default'
+);
+select throws_ok(
+  $$insert into public.vouchers (redemption_code, service_id, expires_on, qr_token) values ('VI-CODE-3', '43000000-0000-0000-0000-000000000001', '2099-12-31', '73000000-0000-0000-0000-000000000001')$$,
+  '23505',
+  null,
+  'two vouchers cannot share a QR token'
 );
 select throws_ok(
   $$insert into public.vouchers (redemption_code, service_id, expires_on, idempotency_key) values ('VI-CODE-3', '43000000-0000-0000-0000-000000000001', '2099-12-31', '63000000-0000-0000-0000-000000000001')$$,
@@ -85,6 +104,12 @@ select throws_ok(
   '42501',
   null,
   'signed-in users are denied the idempotency key column'
+);
+select throws_ok(
+  $$select qr_token from public.vouchers$$,
+  '42501',
+  null,
+  'signed-in users are denied the QR token column'
 );
 reset role;
 

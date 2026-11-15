@@ -65,4 +65,4 @@ Public bucket `service-images` (5 MiB; JPEG, PNG, WebP, AVIF). One `public.servi
 Private bucket `generated-qrs` (1 MiB; PNG), at `<voucher_id>.png`.
 
 - Only `service_role` can read, list or write; there is no public URL.
-- A QR code holds the redemption code, so treat it like `vouchers.redemption_code`.
+- A QR code holds the voucher's `qr_token`, not its redemption code.

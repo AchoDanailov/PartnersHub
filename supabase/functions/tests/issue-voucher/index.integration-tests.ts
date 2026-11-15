@@ -45,7 +45,7 @@ Deno.test("a caller with the issuer secret creates a voucher and its QR code, on
 
     const { data: voucher, error } = await admin
       .from("vouchers")
-      .select("id, redemption_code, service_id, status, expires_on")
+      .select("id, redemption_code, service_id, status, expires_on, qr_token")
       .eq("idempotency_key", idempotencyKey)
       .single();
     assert.ifError(error);
@@ -55,7 +55,7 @@ Deno.test("a caller with the issuer secret creates a voucher and its QR code, on
     assert.equal(voucher.expires_on, EXPIRES_ON);
     assert.match(voucher.redemption_code, /^BLV-[A-Z0-9]{6}$/);
 
-    // The stored QR code opens the service page with the voucher's code.
+    // The stored QR code opens the service page with the voucher's QR token.
     const { data: file, error: downloadError } = await admin.storage
       .from(QR_BUCKET)
       .download(created.qrPath);
@@ -66,7 +66,7 @@ Deno.test("a caller with the issuer secret creates a voucher and its QR code, on
       qr.text,
       `${
         WEB_APP_URL.replace(/\/$/, "")
-      }/services/${ALPINE_MASSAGE_ID}?code=${voucher.redemption_code}`,
+      }/services/${ALPINE_MASSAGE_ID}?t=${voucher.qr_token}`,
     );
 
     // Repeating the call returns the same voucher instead of a second one.

@@ -11,7 +11,7 @@ import {
   forbiddenResponse,
   removalFailedResponse,
 } from "./helpers/responses.ts";
-import type { RemovalContext } from "./types.ts";
+import type { RemovalContext } from "./types/context.ts";
 
 /**
  * Removes a staff member and releases their email so it can be used for a new

@@ -1,8 +1,5 @@
 # 1. Soft-remove organization members through an Edge Function
 
-- Status: Accepted
-- Date: 2026-11-08
-
 ## Context
 
 Removing a staff member is a soft removal. Nothing is hard-deleted: the profile,
@@ -27,7 +24,7 @@ An admin calls the `soft-remove-organization-member` Edge Function. The function
 3. Calls `auth.admin.deleteUser(userId, shouldSoftDelete)` as `service_role` to
    soft-delete the Auth account.
 
-The RPC can only be executed by `service_role`, and `authenticated` keeps
+The RPC can only be executed by `service_role`, this way `authenticated` keeps
 `SELECT` only on `organization_members`. `service_role` bypasses RLS, so the RPC
 checks the actor itself, in the same `UPDATE` that sets `left_at`. This also
 catches an actor whose role changed after the first check.

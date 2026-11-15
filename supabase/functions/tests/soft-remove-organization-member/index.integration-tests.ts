@@ -1,5 +1,5 @@
 // Integration tests: run against the local stack started by `npx supabase start`
-// (migrations + supabase/seed.sql) with the function served by
+// (migrations + supabase/seeding/seed.sql) with the function served by
 // `npx supabase functions serve`. CI exports the env variables read below.
 //
 // Seeded admins are the callers. Each test creates its own staff member to

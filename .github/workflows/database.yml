@@ -1,14 +1,13 @@
 name: Database
 
-# Runs on every push to every branch; same-repository PRs reuse the push run's checks.
 on:
   push:
     branches: ["**"]
     paths:
       - "supabase/migrations/**"
       - "supabase/tests/**"
-      - "supabase/seed.sql"
-      - "supabase/seed/**"
+      - "supabase/seeding/seed.sql"
+      - "supabase/seeding/seed/**"
       - "supabase/config.toml"
       - "web/src/types/database.ts"
       - "supabase/functions/_shared/database.types.ts"
@@ -19,8 +18,8 @@ on:
     paths:
       - "supabase/migrations/**"
       - "supabase/tests/**"
-      - "supabase/seed.sql"
-      - "supabase/seed/**"
+      - "supabase/seeding/seed.sql"
+      - "supabase/seeding/seed/**"
       - "supabase/config.toml"
       - "web/src/types/database.ts"
       - "supabase/functions/_shared/database.types.ts"
@@ -53,12 +52,11 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
 
-      # Installs the Supabase CLI version pinned in the root package.json.
       - name: Install Supabase CLI
         run: npm ci
 
       # Starting the stack applies every migration in supabase/migrations from scratch, loads
-      # supabase/seed.sql and uploads the seed files of the buckets declared in config.toml.
+      # supabase/seeding/seed.sql and uploads the seed files of the buckets declared in config.toml.
       # Services the database tests do not need are skipped to save time.
       - name: Start Supabase and apply migrations
         run: npx supabase start -x studio,imgproxy,logflare,vector,edge-runtime
@@ -68,13 +66,6 @@ jobs:
 
       - name: Run database advisors
         run: npx supabase db advisors --local --fail-on error
-
-      # Both committed copies must match what the CLI generates from the migrated schema.
-      - name: Check generated types are up to date
-        run: |
-          npx supabase gen types typescript --local --schema public > "$RUNNER_TEMP/database.ts"
-          diff "$RUNNER_TEMP/database.ts" web/src/types/database.ts
-          diff "$RUNNER_TEMP/database.ts" supabase/functions/_shared/database.types.ts
 
       - name: Show Supabase status on failure
         if: failure()

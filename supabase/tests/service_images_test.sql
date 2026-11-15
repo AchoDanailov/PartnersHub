@@ -172,7 +172,7 @@ select is_empty(
 -- Anonymous users
 
 -- The "read all" check filters to this file's fixture ID prefix, because the
--- database may already hold rows from supabase/seed.sql.
+-- database may already hold rows from supabase/seeding/seed.sql.
 set local role anon;
 
 select results_eq(

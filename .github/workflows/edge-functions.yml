@@ -1,14 +1,12 @@
 name: Edge Functions
 
-# Runs on every push to every branch, so humans and agents get the same checks before a PR exists.
-# Same-repository PRs reuse the push run's checks on their head commit; only fork PRs run again.
 on:
   push:
     branches: ["**"]
     paths:
       - "supabase/functions/**"
       - "supabase/migrations/**"
-      - "supabase/seed.sql"
+      - "supabase/seeding/seed.sql"
       - "supabase/config.toml"
       - "package.json"
       - "package-lock.json"
@@ -18,7 +16,7 @@ on:
     paths:
       - "supabase/functions/**"
       - "supabase/migrations/**"
-      - "supabase/seed.sql"
+      - "supabase/seeding/seed.sql"
       - "supabase/config.toml"
       - "package.json"
       - "package-lock.json"
@@ -78,7 +76,6 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
 
-      # Installs the Supabase CLI version pinned in the root package.json.
       - name: Install Supabase CLI
         run: npm ci
 
@@ -92,12 +89,10 @@ jobs:
       - name: Restore dependencies
         run: .github/scripts/functions-test-cmd-builder.sh install
 
-      # Applies every migration and supabase/seed.sql. The Edge Runtime is started by
-      # `functions serve` below, the same way as locally.
       - name: Start Supabase
         run: npx supabase start -x studio,imgproxy,logflare,vector,edge-runtime
 
-      # Local-only demo credentials of the CI stack, read by the integration tests.
+      # Credentials of the supabase local stack, read by the integration tests.
       - name: Export local Supabase environment
         run: |
           eval "$(npx supabase status -o env)"
@@ -108,6 +103,20 @@ jobs:
             echo "SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY"
             echo "SUPABASE_SECRET_KEY=$SECRET_KEY"
           } >> "$GITHUB_ENV"
+
+      # Local-only function secrets from the committed .env.example.
+      # The local served functions read the file;
+      # The integration tests read the same values from the environment. (0002-integration-tests-on-ci-against-a-local-stack.md)
+      # "grep -Ev '^[[:space:]]*(#|$)'" - removes comments and empty lines.
+      # Skipped when the file is empty: grep fails when it selects no lines.
+      - name: Create local function secrets
+        run: |
+          if [ ! -s supabase/functions/.env.example ]; then
+            echo "supabase/functions/.env.example is empty; no function secrets to set."
+            exit 0
+          fi
+          cp supabase/functions/.env.example supabase/functions/.env
+          grep -Ev '^[[:space:]]*(#|$)' supabase/functions/.env >> "$GITHUB_ENV"
 
       - name: Serve Edge Functions
         run: .github/scripts/serve-functions.sh

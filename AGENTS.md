@@ -4,12 +4,11 @@ Partners Hub is a local-first React and Supabase platform where our business par
 
 ## Project layout
 
-- `web/`: self-contained Vite frontend with its own dependencies and lockfile; it can be used as the hosting project root. Generated database types live in `web/src/types/database.ts`.
+- `web/`: self-contained Vite frontend with its own dependencies and lockfile. Generated database types live in `web/src/types/database.ts`.
 - `supabase/`: local Supabase configuration, database migrations, pgTAP tests, and Edge Functions. Follow the `edge-functions` skill when writing or changing Edge Functions.
-- `supabase/seed.sql`: local and CI seed data, loaded after migrations by `npx supabase start` and `npx supabase db reset`. It holds three organizations with fixed IDs (`a1000000-...` organizations, `a2000000-...` users, `a4000000-...` services, `a5000000-...` vouchers, `a6000000-...` service images). Every seeded user signs in with the local-only password `password123`. pgTAP tests must not assume the database is empty.
-- `supabase/seed/service-images/`: files for the `service-images` bucket, matching the `service_images` rows in `seed.sql`. Original JPEG, PNG, WebP or AVIF images only (`docs/adr/0003-store-service-images-in-a-public-bucket.md`).
+- `supabase/seeding/`: local stack seeding, loaded after migrations by `npx supabase start` and `npx supabase db reset`. Not run in hosted supabase project. Every seeded user signs in with the local-only password `password123`. 
 - `docs/`: project documentation
-- `.github/`: GitHub Actions workflows and CI helper scripts (`.github/scripts/`). The Database and Edge Functions workflows run on every push to every branch; the Database workflow also checks that both generated type files are up to date; the Edge Functions workflow boots the local stack and runs the integration tests (`docs/adr/0002-integration-tests-on-ci-against-a-local-stack.md`).
+- `.github/`: GitHub Actions workflows and CI helper scripts (`.github/scripts/`). The Database and Edge Functions workflows run on every push to every branch. 
 - Root `package.json`: pinned Supabase CLI and shared development commands.
 
 ## Commands
@@ -29,10 +28,10 @@ npx supabase stop
 npx supabase migration up
 npx supabase test db
 npx supabase db advisors --local
-npx supabase seed buckets --local   # re-upload supabase/seed/service-images without a reset
+npx supabase seed buckets --local   # re-upload supabase/seeding/seed/service-images without a reset
 npx supabase gen types typescript --local --schema public > web/src/types/database.ts
 npx supabase gen types typescript --local --schema public > supabase/functions/_shared/database.types.ts
-npx supabase functions serve soft-remove-organization-member
+npx supabase functions serve 
 .github/scripts/serve-functions.sh   # serve all functions and wait until they boot
 
 # from supabase/functions/ (all functions) or a function's directory (that function only)
@@ -64,4 +63,5 @@ Local Studio is available at `http://127.0.0.1:54323` while the Supabase stack i
 - Run `npx supabase test db` and `npx supabase db advisors --local` for database changes; regenerate `web/src/types/database.ts` and `supabase/functions/_shared/database.types.ts` after schema changes.
 - Run `npm run lint` and `npm run build` for relevant frontend changes; add targeted tests when a test runner is introduced.
 - Keep changes minimal and update this file when project structure or commands change.
+- Do not overstate implementation and other docs.
 - Do not perform Git mutations unless explicitly requested.

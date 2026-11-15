@@ -1,4 +1,4 @@
-import type { Membership } from "../types.ts";
+import type { Membership } from "../types/membership.ts";
 
 /**
  * The actor must be a current admin of the target's organization, and the

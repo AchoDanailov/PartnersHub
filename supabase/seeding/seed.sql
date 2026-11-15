@@ -5,14 +5,6 @@
 --
 -- Every seeded user signs in with the local-only password `password123`.
 --
--- Fixed IDs, so tests and smoke checks can reference known rows. The prefixes
--- differ from the pgTAP fixtures in supabase/tests (1x/2x/4x/5x):
---   a1000000-... organizations
---   a2000000-... users (auth.users, auth.identities, profiles, organization_members)
---   a4000000-... services
---   a5000000-... vouchers
---   a6000000-... service images
---
 -- Alpine Wellness
 --   admin:    admin@alpine.example.com
 --   staff:    staff-1@alpine.example.com, staff-2@alpine.example.com
@@ -167,9 +159,8 @@ values
   ('a5000000-0000-0000-0000-000000000013', 'CEDAR-PILATES-0002', 'a4000000-0000-0000-0000-000000000005', 'cancelled', current_date + 90, now(), null, null),
   ('a5000000-0000-0000-0000-000000000014', 'CEDAR-PILATES-0003', 'a4000000-0000-0000-0000-000000000005', 'active', current_date - 30, now() - interval '60 days', null, null);
 
--- Service images. Each path is a file under supabase/seed/service-images, at
--- <organization_id>/<service_id>/<image_id>.<ext>. Pilates Class has no images
--- on purpose, to cover the empty state.
+-- Service images. Each path is a file under supabase/seeding/seed/service-images, at
+-- <organization_id>/<service_id>/<image_id>.<ext>.
 insert into public.service_images (id, service_id, path, alt_text, sort_order)
 values
   ('a6000000-0000-0000-0000-000000000001', 'a4000000-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-000000000001/a4000000-0000-0000-0000-000000000001/a6000000-0000-0000-0000-000000000001.jpg', 'Smooth dark massage stones stacked beside a rolled white towel, with mountains in the background', 0),

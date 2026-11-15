@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import app, {
   handleRemoveOrganizationMember,
 } from "../../soft-remove-organization-member/index.ts";
-import type { RemovalContext } from "../../soft-remove-organization-member/types.ts";
+import type { RemovalContext } from "../../soft-remove-organization-member/types/context.ts";
 
 const ACTOR_ID = "21000000-0000-0000-0000-000000000001";
 const USER_ID = "21000000-0000-0000-0000-000000000002";

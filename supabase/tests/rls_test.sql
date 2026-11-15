@@ -211,7 +211,7 @@ select ok((select relrowsecurity from pg_class where oid = 'public.vouchers'::re
 -- Anonymous users
 
 -- The "read all" checks filter to this file's fixture ID prefixes, because the
--- database may already hold rows from supabase/seed.sql.
+-- database may already hold rows from supabase/seeding/seed.sql.
 set local role anon;
 
 select results_eq(

@@ -5,9 +5,7 @@ description: How to write, change, test, and validate Supabase Edge Functions in
 
 # Edge Functions in Partners Hub
 
-This skill holds the conventions this repo settled on for `supabase/functions/`. Each one exists so a reader can open any function and find the same things in the same places, and so CI checks every function the same way.
-
-Only `index.ts`, `deno.json` and `README.md` are fixed. Everything else follows from what the function actually has.
+This skill holds the conventions this repo settled on for `supabase/functions/`.
 
 ### `index.ts`
 
@@ -18,43 +16,13 @@ Only `index.ts`, `deno.json` and `README.md` are fixed. Everything else follows 
 
 If a type, helper, or constant appears above the handler, move it out.
 
-### Types, constants and helpers: a file, then a folder
+### Types, constants and helpers: always a folder
 
-Move code out of `index.ts` into the smallest structure that holds it cleanly, and grow the structure as the function grows. The same rule applies to types, constants and helpers:
-
-1. **None**: create no file. Don't make an empty `types.ts` or a `constants.ts` with nothing in it.
-2. **One domain**: a single file at the function root: `types.ts`, `constants.ts`, `helpers.ts`.
-3. **More than two items across different domains**: a folder of that name, with one file per domain, named after the domain:
-
-   ```
-   <function-name>/
-     index.ts
-     types/
-       membership.ts        Membership, MembershipRole
-       request.ts           RemovalRequest, RemovalContext
-     constants/
-       limits.ts            MAX_BODY_BYTES, MAX_QUERY_PARAMS
-       image.ts             colours and layout numbers
-     helpers/
-       url.ts               destination URL validation and building
-       qr-code.ts           QR rendering
-   ```
-
-Re-check the shape whenever you add code. When a single `types.ts` starts mixing domains, split it into `types/`. When a folder shrinks to one file, fold it back. The three kinds evolve independently: one function can have a `types/` folder, a single `constants.ts`, and no helpers at all.
-
-What each kind holds:
-
-- **Types**: types and interfaces. Derive database shapes from the generated types (`Tables<"organization_members">`, `Pick<...>`) instead of retyping columns by hand, so a schema change becomes a type error.
-- **Constants**: constant values such as limits, regexes, colours, layout numbers, env variable names and asset URLs.
-  - Runtime state stays in the module that owns it. 
-  - Don't make a constant out of a standard value used once. `"POST"`, `"Content-Type"`, `"application/json"` and a one-off error message read better inline. Make a constant when the value is tuned, used in several places, or would be a magic value without a name.
-- **Helpers**: functions the handler calls. Inside a helper module, put the exported main function first and its private helpers below it. Function declarations are hoisted, so the order doesn't matter at runtime.
+Put types, constants and helpers in `types/`, `constants/` and `helpers/`, with one file per domain, named after the domain (`helpers/request.ts`). Use the folder even for a single item, and create no folder for a kind the function doesn't have. This rule covers only these three kinds.
 
 ### `_shared/`
 
-`_shared/` holds code that two or more functions actually use: types, constants or helpers alike. Code used by only one function stays in that function, and moves here when a second function needs it. Organise it with the same file-then-folder rule as a function directory.
-
-Use the helpers that already exist in `_shared/http.ts` rather than writing new ones:
+`_shared/` holds code that two or more functions actually use. Code used by only one function stays in that function, and moves here when a second function needs it. Organise it as one file per domain.
 
 ## Writing the handler
 
@@ -66,10 +34,10 @@ Use the helpers that already exist in `_shared/http.ts` rather than writing new 
 - **Authorization**: check it explicitly in the function. AGENTS.md requires this.
   - Use `ctx.supabaseAdmin` only for the step that really needs it.
   - Never use `user_metadata` for authorization.
-- **Input**: validate everything from the request and give the body a byte limit through `readJsonBody`. Normalise identifiers (for example, lowercase UUIDs) before comparing them.
-- **Idempotency**: when a retry is likely (network failure after a write), make the operation safe to repeat and say so in the handler's doc comment.
+- **Input**: validate everything from the request with a Zod schema and give the body a byte limit through `readJsonBody`. Normalise identifiers (for example, lowercase UUIDs) before comparing them.
+- **Idempotency**: when a retry is likely (network failure after a write), make the operation safe to repeat. 
 - **Dependencies**: pin npm versions exactly in the function's `deno.json` (`"npm:@supabase/server@1.9.2"`) and import them by bare name. Test-only packages go in the workspace root `deno.json`, not the function's.
-- **Secrets**: read them from env, keep them in ignored local `.env` files, and never commit them or put them in `web/` or `VITE_*` variables.
+- **Secrets**: read them from env, and never commit real ones or put them in `web/` or `VITE_*` variables. Local values live in the ignored `supabase/functions/.env`, copied from the committed `supabase/functions/.env.example`, which holds local-only values that CI also uses. Add every new variable to that example, and never use a Supabase secret key as a credential for an outside caller.
 
 ## Registering a new function
 
@@ -83,7 +51,7 @@ Use the helpers that already exist in `_shared/http.ts` rather than writing new 
    ```
 2. **Add the function to `"workspace"`** in `supabase/functions/deno.json`, and extend the root `check` task to include its `index.ts`.
 3. **Put its tests in `supabase/functions/tests/<fn>/`**, which the root `check` and `test` tasks already cover (see Tests below).
-4. **Write a `README.md`** with the endpoint, request and response shapes, error codes, auth, local setup, and how to verify. Use `soft-remove-organization-member/README.md` as the model.
+4. **Write a `README.md`** with the endpoint, request and response shapes, error codes, auth, local setup, and how to verify. Use `soft-remove-organization-member/README.md` as the model. Be less verbose.
 
 ## Tests
 
@@ -99,64 +67,32 @@ Writing the tests:
 - Cover every status the handler can return, the input limits, and every authorization rule the handler enforces. Assert the response body shape, not just the status.
 - Consume or cancel every response body (`await response.text()`). Deno's leak checker fails a test that leaves a body unread.
 
-### CI and integration tests
+### Integration tests
 
-`.github/workflows/edge-functions.yml` runs on every push to every branch, so agents get runtime feedback without Docker. It has two jobs:
+Integration tests are `*.integration-tests.ts` files under `tests/<fn>/` (subfolders allowed). Run them against the live local stack from `supabase/functions/` with `deno task test:integration`. The suffix keeps them out of `test`.
 
-1. **Check and unit tests**: `install`, `check` and `test`, as described above.
-2. **Integration tests**: boots the local stack with migrations and `supabase/seed.sql`, serves every function through `.github/scripts/serve-functions.sh`, which fails on a boot error, then runs `test:integration`. To check each function booted, the script sends it an empty POST signed in as a seeded user (user JWT plus publishable key) and treats any non-5xx answer as up. A function must reject that empty body without side effects.
-
-A function is only served and integration-tested if it follows this layout:
-
-```
-supabase/
-  config.toml                          [functions.<fn>] entry
-  functions/
-    deno.json                          "<fn>" in "workspace"; <fn>/index.ts in the root `check` task
-    <fn>/
-    tests/<fn>/
-      index.test.ts                    unit tests (fake context)
-      index.integration-tests.ts       integration tests (live local stack)
-```
-
-- **Naming**: the `.integration-tests.ts` suffix keeps these files out of the unit `test` task. The root `test:integration` task picks up `tests/**/*.integration-tests.ts`.
-- **Env**: CI exports `SUPABASE_URL`, `SUPABASE_FUNCTIONS_URL`, `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY` from the local stack. Read them in the test and fail with a clear message when one is missing.
-- **Keep them few**, and leave edge cases to unit tests (see `docs/adr/0002-integration-tests-on-ci-against-a-local-stack.md`):
-  - one test per distinct integration (a new provider, a new Supabase service)
-  - at least one operation of each CRUD type the function performs
-  - one allowed caller and one rejected caller
-- **Data**: sign in as seeded users from `supabase/seed.sql` (password `password123`). Create any row the test changes or deletes in the test itself, so the seed isn't consumed and the file can be re-run.
-- **Model**: `tests/soft-remove-organization-member/index.integration-tests.ts`.
+- **Env**: read `SUPABASE_URL`, `SUPABASE_FUNCTIONS_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` and the variables in `supabase/functions/.env.example`. Fail with a clear message when one is missing.
+- **Keep them few**, and leave edge cases to unit tests (`docs/adr/0002-integration-tests-on-ci-against-a-local-stack.md`): one per distinct integration, one per CRUD type the function performs, one allowed and one rejected caller.
+- **Data**: sign in as users from `supabase/seeding/seed.sql` (password `password123`). Create any row a test changes or deletes, so the file can be re-run.
+- **Empty body**: a function must reject an empty POST without side effects; CI uses it as a boot check.
 
 ## Validation
 
-After any change under `supabase/functions/`, run these and fix what they report before calling the work done.
+After any change under `supabase/functions/`, run everything locally and fix what it reports.
 
-1. **Static checks**, from `supabase/functions/`. They're fast and need no Docker.
+1. **Static**, from `supabase/functions/`: `deno fmt`, `deno lint`, `deno task check`, `deno task test`.
+2. **Integration**, against the local stack. Needs Docker Desktop (`docker --context desktop-linux info`); if it's down, ask the user to start it. Remote agents without Docker: push the branch and read the Edge Functions workflow result instead. From the repo root:
    ```sh
-   deno fmt            # formats in place; then `deno fmt --check` must pass
-   deno lint
-   deno task check     # root: type-checks every function and all tests
-   deno task test      # root: runs every function's tests
+   npx supabase start
+   cp -n supabase/functions/.env.example supabase/functions/.env
+   npx supabase functions serve --env-file supabase/functions/.env &   # background; wait until it serves
+   eval "$(npx supabase status -o env)"
+   export SUPABASE_URL="$API_URL" SUPABASE_FUNCTIONS_URL="$API_URL/functions/v1" \
+     SUPABASE_PUBLISHABLE_KEY="$PUBLISHABLE_KEY" SUPABASE_SECRET_KEY="$SECRET_KEY"
+   set -a; . supabase/functions/.env; set +a
+   (cd supabase/functions && deno task test:integration)
    ```
-2. **Runtime checks**, which need Docker. The Supabase CLI here talks to Docker Desktop (context `desktop-linux`). Check it first:
-   ```sh
-   docker --context desktop-linux info >/dev/null 2>&1 && echo up || echo down
-   ```
-   - **If it's down, stop and ask the user to start Docker Desktop.** Don't try to start it yourself; it's a desktop app on the user's machine. In the meantime, report that the static checks passed and the runtime checks are still pending.
-   - **If it's up:**
-     - Run `npx supabase status`, and `npx supabase start` if the stack is stopped.
-     - If the schema changed, regenerate both type files:
-       ```sh
-       npx supabase gen types typescript --local --schema public > supabase/functions/_shared/database.types.ts
-       npx supabase gen types typescript --local --schema public > web/src/types/database.ts
-       ```
-     - Serve in the background with `npx supabase functions serve` (add `--env-file supabase/functions/<fn>/.env` if the function needs local secrets). Use `curl` on the changed function to confirm it boots and returns the expected status and body for a success case and one or two error cases. Stop the server afterwards.
-     - If a smoke test needs a real user, sign one up on the local stack, then delete it through the admin API afterwards.
-
-3. **No Docker** (for example, a cloud agent): push the branch and use the Edge Functions workflow as the runtime check. Read its result before reporting.
-
-When you report back, say which of these steps ran and which didn't. "Static checks pass, runtime check skipped because Docker Desktop is down" is a useful report; "done" is not.
+CI (`.github/workflows/edge-functions.yml`) runs the same checks on every push. It doesn't replace running them locally.
 
 ## Boundaries
 

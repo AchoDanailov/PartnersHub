@@ -69,7 +69,7 @@ schema_paths = []
 enabled = true
 # Specifies an ordered list of seed files to load during db reset.
 # Supports glob patterns relative to supabase directory: "./seeds/*.sql"
-sql_paths = ["./seed.sql"]
+sql_paths = ["./seeding/seed.sql"]
 
 [db.network_restrictions]
 # Enable management of network restrictions.
@@ -119,12 +119,12 @@ enabled = true
 file_size_limit = "50MiB"
 
 # Declared only so the CLI uploads the local seed files. Keep identical to the bucket in
-# migrations/20261112115255_service_images.sql: the CLI overwrites the local bucket with these values.
+# migrations/20261112115255_service_images.sql.
 [storage.buckets.service-images]
 public = true
 file_size_limit = "5MiB"
 allowed_mime_types = ["image/jpeg", "image/png", "image/webp", "image/avif"]
-objects_path = "./seed/service-images"
+objects_path = "./seeding/seed/service-images"
 
 # Uncomment to configure local storage buckets
 # [storage.buckets.images]

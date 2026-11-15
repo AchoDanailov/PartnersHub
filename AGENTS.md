@@ -56,6 +56,7 @@ Local Studio is available at `http://127.0.0.1:54323` while the Supabase stack i
 - Never use `user_metadata` for authorization decisions.
 - Never expose service-role or secret keys in `web/` or `VITE_*` variables.
 - Perform explicit authentication and authorization checks in Edge Functions.
+- Never give a Supabase secret key to an outside caller; it acts as `service_role`. 
 - Work locally by default. Do not link, push, deploy, or otherwise mutate a hosted Supabase project without an explicit user request.
 
 ## Verification and changes

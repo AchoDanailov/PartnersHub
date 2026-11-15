@@ -39,6 +39,7 @@ All tables have RLS enabled. Column-level grants limit which columns each role c
 
 - **Full access to all tables, and bypasses RLS**
 - **Service images** - only `service_role` writes `service_images` rows and objects in the `service-images` bucket. Upload Edge Functions will do both.
+- **Issuing vouchers** - only `service_role` creates `vouchers` rows and objects in the `generated-qrs` bucket. The `issue-voucher` Edge Function does both. Its caller is not a Supabase user: it sends a secret that only this function accepts (`docs/adr/0004-issue-vouchers-with-a-function-specific-secret.md`).
 - **Removing organization member** - `public.remove_organization_member(p_actor_id, p_user_id)` (RPC, only `service_role` can call): called by the `soft-remove-organization-member` Edge Function or an operator. `p_actor_id` must be the current admin of the staff member's organization, for every caller. The Edge Function then uses the Admin API to soft delete the user (from the `auth` table), thus releasing the email to be used again in a different organization.
 
 ---
@@ -58,3 +59,10 @@ Public bucket `service-images` (5 MiB; JPEG, PNG, WebP, AVIF). One `public.servi
 - No policies on `storage.objects`, so only `service_role` can list or write.
 - Anyone with the URL can download, so nothing private goes here.
 - Frontend URL: `supabase.storage.from('service-images').getPublicUrl(path)`.
+
+### Voucher QR codes
+
+Private bucket `generated-qrs` (1 MiB; PNG), at `<voucher_id>.png`.
+
+- Only `service_role` can read, list or write; there is no public URL.
+- A QR code holds the redemption code, so treat it like `vouchers.redemption_code`.

@@ -1,12 +1,15 @@
 {
   "workspace": [
-    "./soft-remove-organization-member"
+    "./soft-remove-organization-member",
+    "./issue-voucher"
   ],
   "imports": {
-    "@supabase/supabase-js": "npm:@supabase/supabase-js@2.118.0"
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2.118.0",
+    "jsqr": "npm:jsqr@1.4.0",
+    "pngjs": "npm:pngjs@7.0.0"
   },
   "tasks": {
-    "check": "deno check soft-remove-organization-member/index.ts tests/",
+    "check": "deno check soft-remove-organization-member/index.ts issue-voucher/index.ts tests/",
     "test": "deno test --allow-env tests/",
     "test:integration": "deno test --allow-env --allow-net=127.0.0.1:54321,localhost:54321 tests/**/*.integration-tests.ts"
   },

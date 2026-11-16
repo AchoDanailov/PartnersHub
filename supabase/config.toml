@@ -435,3 +435,16 @@ enabled = true
 verify_jwt = true
 import_map = "./functions/soft-remove-organization-member/deno.json"
 entrypoint = "./functions/soft-remove-organization-member/index.ts"
+
+[functions.voucher-status]
+enabled = true
+# Public: anyone with a voucher's QR link checks it with the publishable key.
+verify_jwt = false
+import_map = "./functions/voucher-status/deno.json"
+entrypoint = "./functions/voucher-status/index.ts"
+
+[functions.redeem-voucher]
+enabled = true
+verify_jwt = true
+import_map = "./functions/redeem-voucher/deno.json"
+entrypoint = "./functions/redeem-voucher/index.ts"

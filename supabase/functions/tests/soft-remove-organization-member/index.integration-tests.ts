@@ -104,7 +104,7 @@ async function signIn(email: string): Promise<string> {
   return data.session.access_token;
 }
 
-/** Creates a confirmed Auth user with a profile and a staff membership in Alpine Wellness. */
+/** Creates a confirmed Auth user with a profile and a staff membership in Пирин СПА. */
 async function createAlpineStaffMember(): Promise<
   { id: string; email: string }
 > {

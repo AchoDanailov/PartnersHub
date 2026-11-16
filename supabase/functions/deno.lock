@@ -274,7 +274,19 @@
           "npm:zod@4.6.7"
         ]
       },
+      "redeem-voucher": {
+        "dependencies": [
+          "npm:@supabase/server@1.9.2",
+          "npm:zod@4.6.7"
+        ]
+      },
       "soft-remove-organization-member": {
+        "dependencies": [
+          "npm:@supabase/server@1.9.2",
+          "npm:zod@4.6.7"
+        ]
+      },
+      "voucher-status": {
         "dependencies": [
           "npm:@supabase/server@1.9.2",
           "npm:zod@4.6.7"

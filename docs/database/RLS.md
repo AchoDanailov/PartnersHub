@@ -9,9 +9,11 @@ All tables have RLS enabled. Column-level grants limit which columns each role c
 | `profiles` | none | Own profile; admins also see profiles of their organization's members |
 | `organization_members` | none | Own membership; admins also see all members of their organization |
 | `organizations` | All rows: `id`, `name` | Members of that organization |
-| `services` | All rows: `id`, `organization_id`, `name` | Members of the owning organization |
+| `services` | All rows: `id`, `organization_id`, `name`, `tagline`, `description` | Members of the owning organization |
 | `vouchers` | All rows: `id`, `status`, `expires_on` | Members of the owning organization: `id`, `service_id`, `status`, `expires_on` |
 | `service_images` | All rows: `id`, `service_id`, `path`, `alt_text`, `sort_order` | Members of the owning organization |
+| `service_faqs` | none | The current admin of the owning organization |
+| `voucher_code_attempts` | none | none |
 
 ### Other open interfaces to read resources
 
@@ -30,15 +32,21 @@ All tables have RLS enabled. Column-level grants limit which columns each role c
 
 - **Has no write access**
 
+### anon
+
+- **Checking a voucher by QR token** - anyone with the publishable key goes through the `voucher-status` Edge Function, which reads the voucher with `service_role` and returns its state, never its code (`docs/adr/0005-redeem-vouchers-by-qr-token-or-code.md`).
+
 ### authenticated
 
 - **Updating own username** - may update `profiles.username`, on their own non-anonymized profile. 
+- **Redeeming vouchers** - current members go through the `redeem-voucher` Edge Function, which checks their membership under RLS, then reads and updates the voucher with `service_role`. Failed typed codes are recorded in `voucher_code_attempts` and limited per member.
 - **Removing organization member** - organisation admins go through the `soft-remove-organization-member` Edge Function, which authenticates and authorizes them. They cannot call the RPC directly.
 
 ### service_role
 
 - **Full access to all tables, and bypasses RLS**
 - **Service images** - only `service_role` writes `service_images` rows and objects in the `service-images` bucket. Upload Edge Functions will do both.
+- **Service content** - only `service_role` writes `services.tagline`, `services.description` and `service_faqs` rows.
 - **Issuing vouchers** - only `service_role` creates `vouchers` rows and objects in the `generated-qrs` bucket. The `issue-voucher` Edge Function does both. Its caller is not a Supabase user: it sends a secret that only this function accepts (`docs/adr/0004-issue-vouchers-with-a-function-specific-secret.md`).
 - **Removing organization member** - `public.remove_organization_member(p_actor_id, p_user_id)` (RPC, only `service_role` can call): called by the `soft-remove-organization-member` Edge Function or an operator. `p_actor_id` must be the current admin of the staff member's organization, for every caller. The Edge Function then uses the Admin API to soft delete the user (from the `auth` table), thus releasing the email to be used again in a different organization.
 

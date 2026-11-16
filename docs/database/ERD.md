@@ -6,6 +6,8 @@ Sources:
 - `supabase/migrations/20261102223932_soft_deletion.sql`
 - `supabase/migrations/20261112115255_service_images.sql`
 - `supabase/migrations/20261113180000_voucher_issuance.sql`
+- `supabase/migrations/20261116120523_service_content.sql`
+- `supabase/migrations/20261116120524_voucher_redemption.sql`
 
 ```mermaid
 erDiagram
@@ -15,6 +17,8 @@ erDiagram
     organizations ||--o{ services : "offers"
     services ||--o{ vouchers : "issues"
     services ||--o{ service_images : "is shown by"
+    services ||--o{ service_faqs : "is asked about"
+    organization_members ||--o{ voucher_code_attempts : "mistypes codes"
     organization_members |o--o{ vouchers : "redeems"
 
     auth_users {
@@ -48,6 +52,8 @@ erDiagram
         uuid organization_id FK "references organizations.id, on delete restrict; immutable"
         text name "not blank"
         timestamptz created_at "default now()"
+        text tagline "nullable; not blank when present; one line under the name"
+        text description "nullable; not blank when present; paragraphs separated by a blank line"
     }
 
     vouchers {
@@ -71,11 +77,25 @@ erDiagram
         integer sort_order "not negative; position within the service, unique per service"
         timestamptz created_at "default now()"
     }
+
+    service_faqs {
+        uuid id PK "default gen_random_uuid()"
+        uuid service_id FK "references services.id, on delete cascade"
+        text question "not blank; a question clients often ask"
+        integer sort_order "not negative; unique per service"
+        timestamptz created_at "default now()"
+    }
+
+    voucher_code_attempts {
+        uuid id PK "default gen_random_uuid()"
+        uuid user_id FK "references organization_members.user_id, on delete cascade"
+        timestamptz attempted_at "default now()"
+    }
 ```
 
 `service_images.path` points at an object in the public `service-images` Storage bucket. There is no foreign key into `storage.objects`, so deleting a row (directly or by deleting its service) leaves the file in the bucket; see `docs/adr/0003-store-service-images-in-a-public-bucket.md`.
 
-`vouchers.idempotency_key` is the key the caller sends to the `issue-voucher` Edge Function, so a retried request returns the first voucher instead of creating a second one. `vouchers.qr_token` is what the voucher's QR code carries instead of the redemption code; see `docs/adr/0005-redeem-vouchers-by-qr-token-or-code.md`. Each issued voucher has a QR code at `<voucher_id>.png` in the private `generated-qrs` Storage bucket; see `docs/adr/0004-issue-vouchers-with-a-function-specific-secret.md`.
+`vouchers.idempotency_key` is the key the caller sends to the `issue-voucher` Edge Function, so a retried request returns the first voucher instead of creating a second one. `vouchers.qr_token` is what the voucher's QR code carries instead of the redemption code; see `docs/adr/0005-redeem-vouchers-by-qr-token-or-code.md`. `voucher_code_attempts` holds one row per typed code that found no voucher of the member's organization; `redeem-voucher` counts recent rows to limit guessing. Each issued voucher has a QR code at `<voucher_id>.png` in the private `generated-qrs` Storage bucket; see `docs/adr/0004-issue-vouchers-with-a-function-specific-secret.md`.
 
 ## Enums
 

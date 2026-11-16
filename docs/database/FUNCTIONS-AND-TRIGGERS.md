@@ -25,6 +25,11 @@ Access rules for callable functions are in `RLS.md`.
 - `vouchers_ensure_organization_active` → `private.ensure_voucher_organization_active()`
   Before insert: rejects new vouchers for a service of a deactivated organization.
 
+### service_faqs
+
+- `service_faqs_ensure_organization_active` → `private.ensure_service_faq_organization_active()`
+  Before insert: rejects new questions for a service of a deactivated organization.
+
 ### service_images
 
 - `service_images_ensure_organization_active` → `private.ensure_service_image_organization_active()`

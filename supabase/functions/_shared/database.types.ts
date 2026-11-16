@@ -59,6 +59,26 @@ isOneToOne: true
                   Relationships: [
                     
                   ]
+                },"service_faqs": {
+                  Row: {
+                    "created_at": string,"id": string,"question": string,"service_id": string,"sort_order": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"question": string,"service_id": string,"sort_order": number
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"question"?: string,"service_id"?: string,"sort_order"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "service_faqs_service_id_fkey"
+      columns: ["service_id"]
+isOneToOne: false
+      referencedRelation: "services"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"service_images": {
                   Row: {
                     "alt_text": string | null,"created_at": string,"id": string,"path": string,"service_id": string,"sort_order": number
@@ -81,14 +101,14 @@ isOneToOne: false
                   ]
                 },"services": {
                   Row: {
-                    "created_at": string,"id": string,"name": string,"organization_id": string
+                    "created_at": string,"description": string | null,"id": string,"name": string,"organization_id": string,"tagline": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"id"?: string,"name": string,"organization_id": string
+                    "created_at"?: string,"description"?: string | null,"id"?: string,"name": string,"organization_id": string,"tagline"?: string | null
                   }
                   Update: {
-                    "created_at"?: string,"id"?: string,"name"?: string,"organization_id"?: string
+                    "created_at"?: string,"description"?: string | null,"id"?: string,"name"?: string,"organization_id"?: string,"tagline"?: string | null
                   }
                   Relationships: [
                     {
@@ -97,6 +117,26 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "organizations"
       referencedColumns: ["id"]
+    }
+                  ]
+                },"voucher_code_attempts": {
+                  Row: {
+                    "attempted_at": string,"id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "attempted_at"?: string,"id"?: string,"user_id": string
+                  }
+                  Update: {
+                    "attempted_at"?: string,"id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "voucher_code_attempts_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "organization_members"
+      referencedColumns: ["user_id"]
     }
                   ]
                 },"vouchers": {

@@ -10,7 +10,14 @@ export type ErrorCode =
   | "QR_GENERATION_FAILED"
   | "QR_UPLOAD_FAILED"
   | "REMOVAL_FAILED"
-  | "EMAIL_NOT_RELEASED";
+  | "EMAIL_NOT_RELEASED"
+  | "VOUCHER_NOT_FOUND"
+  | "VOUCHER_LOOKUP_FAILED"
+  | "VOUCHER_EXPIRED"
+  | "VOUCHER_ALREADY_REDEEMED"
+  | "VOUCHER_CANCELLED"
+  | "TOO_MANY_ATTEMPTS"
+  | "REDEMPTION_FAILED";
 
 /** Same flat shape as the auth errors returned by `@supabase/server`. */
 export interface ErrorBody {

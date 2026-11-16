@@ -5,6 +5,7 @@ Sources:
 - `supabase/migrations/20261029211310_initial_data_layer.sql`
 - `supabase/migrations/20261102223932_soft_deletion.sql`
 - `supabase/migrations/20261112115255_service_images.sql`
+- `supabase/migrations/20261113180000_voucher_issuance.sql`
 
 ```mermaid
 erDiagram
@@ -51,13 +52,15 @@ erDiagram
 
     vouchers {
         uuid id PK "default gen_random_uuid()"
-        text redemption_code UK "not blank"
+        text redemption_code UK "not blank; clear text; issued codes are BLV- plus 6 uppercase letters or digits"
         uuid service_id FK "references services.id, on delete restrict"
         date expires_on "not before the created_at date (UTC)"
         timestamptz created_at "default now()"
         voucher_status status "active, redeemed or cancelled; default active"
         uuid redeemed_by FK "nullable; references organization_members.user_id, on delete restrict"
         timestamptz redeemed_at "nullable"
+        uuid idempotency_key UK "default gen_random_uuid(); issue-voucher stores the caller's key"
+        uuid qr_token UK "default gen_random_uuid(); carried by the voucher's QR code"
     }
 
     service_images {
@@ -71,6 +74,8 @@ erDiagram
 ```
 
 `service_images.path` points at an object in the public `service-images` Storage bucket. There is no foreign key into `storage.objects`, so deleting a row (directly or by deleting its service) leaves the file in the bucket; see `docs/adr/0003-store-service-images-in-a-public-bucket.md`.
+
+`vouchers.idempotency_key` is the key the caller sends to the `issue-voucher` Edge Function, so a retried request returns the first voucher instead of creating a second one. `vouchers.qr_token` is what the voucher's QR code carries instead of the redemption code; see `docs/adr/0005-redeem-vouchers-by-qr-token-or-code.md`. Each issued voucher has a QR code at `<voucher_id>.png` in the private `generated-qrs` Storage bucket; see `docs/adr/0004-issue-vouchers-with-a-function-specific-secret.md`.
 
 ## Enums
 

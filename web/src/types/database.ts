@@ -101,14 +101,14 @@ isOneToOne: false
                   ]
                 },"vouchers": {
                   Row: {
-                    "created_at": string,"expires_on": string,"id": string,"redeemed_at": string | null,"redeemed_by": string | null,"redemption_code": string,"service_id": string,"status": Database["public"]['Enums']["voucher_status"]
+                    "created_at": string,"expires_on": string,"id": string,"idempotency_key": string,"qr_token": string,"redeemed_at": string | null,"redeemed_by": string | null,"redemption_code": string,"service_id": string,"status": Database["public"]['Enums']["voucher_status"]
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"expires_on": string,"id"?: string,"redeemed_at"?: string | null,"redeemed_by"?: string | null,"redemption_code": string,"service_id": string,"status"?: Database["public"]['Enums']["voucher_status"]
+                    "created_at"?: string,"expires_on": string,"id"?: string,"idempotency_key"?: string,"qr_token"?: string,"redeemed_at"?: string | null,"redeemed_by"?: string | null,"redemption_code": string,"service_id": string,"status"?: Database["public"]['Enums']["voucher_status"]
                   }
                   Update: {
-                    "created_at"?: string,"expires_on"?: string,"id"?: string,"redeemed_at"?: string | null,"redeemed_by"?: string | null,"redemption_code"?: string,"service_id"?: string,"status"?: Database["public"]['Enums']["voucher_status"]
+                    "created_at"?: string,"expires_on"?: string,"id"?: string,"idempotency_key"?: string,"qr_token"?: string,"redeemed_at"?: string | null,"redeemed_by"?: string | null,"redemption_code"?: string,"service_id"?: string,"status"?: Database["public"]['Enums']["voucher_status"]
                   }
                   Relationships: [
                     {

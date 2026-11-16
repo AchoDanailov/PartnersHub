@@ -1,32 +1,28 @@
-# React + TypeScript + Vite
+# Partners Hub web app
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React, TypeScript, Vite and Tailwind. The interface is in Bulgarian. Setup and
+commands are in the root `AGENTS.md`.
 
-Currently, two official plugins are available:
+## Pages
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| Route | Who | What |
+| --- | --- | --- |
+| `/services/:serviceId` | everyone | The service page a voucher's QR code opens (`?t=<qr_token>`): photos, marketing text, the voucher's state, and using it for staff |
+| `/services` | signed-out visitors | Every service of every organization |
+| `/` | staff and admins | Sign-in, using a voucher by its code, own services |
+| `/dashboard` | admins | Voucher counts, used and unused vouchers, client questions |
 
-## React Compiler
+A signed-in member sees only their own organization's services. Opening any
+other service page, or `/services`, sends them to `/`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Layout
 
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```
+src/
+  lib/         Supabase client, env (checked with Zod), formatting
+  components/  shared UI: buttons, the bottom sheet, the header
+  features/    auth, services, redeem (voucher flow), dashboard
+  pages/       one component per route
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Brand colors and fonts are tokens in `src/index.css` (`@theme`).

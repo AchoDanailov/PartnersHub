@@ -4,7 +4,7 @@ Partners Hub is a local-first React and Supabase platform where our business par
 
 ## Project layout
 
-- `web/`: self-contained Vite frontend with its own dependencies and lockfile. Generated database types live in `web/src/types/database.ts`.
+- `web/`: self-contained Vite frontend (React, Tailwind, React Router, TanStack Query) with its own dependencies and lockfile. The interface is in Bulgarian. Generated database types live in `web/src/types/database.ts`.
 - `supabase/`: local Supabase configuration, database migrations, pgTAP tests, and Edge Functions. Follow the `edge-functions` skill when writing or changing Edge Functions.
 - `supabase/seeding/`: local stack seeding, loaded after migrations by `npx supabase start` and `npx supabase db reset`. Not run in hosted supabase project. Every seeded user signs in with the local-only password `password123`. 
 - `docs/`: project documentation
@@ -48,7 +48,8 @@ Local Studio is available at `http://127.0.0.1:54323` while the Supabase stack i
 
 1. Start Supabase and run `npx supabase status` to obtain the local API URL and publishable key.
 2. Copy `web/.env.example` to `web/.env.local`.
-3. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` using those local values.
+3. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` using those local values. Leave `VITE_MAIN_SITE_URL` (the main site where clients buy vouchers) empty until it is known.
+4. Serve the Edge Functions (`npx supabase functions serve`): voucher status and redemption go through them.
 
 ## Security baseline
 

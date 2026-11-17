@@ -40,7 +40,10 @@ For local development, `web/.env.local` holds:
 - `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`: the local API URL and publishable key.
 - `VITE_MAIN_SITE_URL`: the main site where clients buy vouchers.
 
-The Quickstart writes this file in one command. To do it by hand instead, copy [`web/.env.example`](web/.env.example) to `web/.env.local` and paste in the `API_URL` and `PUBLISHABLE_KEY` values from `npx supabase status -o env`.
+Create it from [`web/.env.example`](web/.env.example), then run `npx supabase status` and set:
+
+- `VITE_SUPABASE_URL`: **Project URL**
+- `VITE_SUPABASE_PUBLISHABLE_KEY`: **Publishable**
 
 Voucher status and redemption go through the Edge Functions, so serve them while using the app.
 

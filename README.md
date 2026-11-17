@@ -69,33 +69,53 @@ Partners Hub automates the partner's side of this process. Partners and their st
 
 ### Quickstart
 
-Run from the repository root:
+Run from the repository root.
+
+#### 1. Install dependencies
 
 ```sh
-# 1. Install dependencies
 npm install
 npm install --prefix web
+```
 
-# 2. Start the local Supabase stack (applies migrations and seed data)
+#### 2. Start the local Supabase stack
+
+The Supabase CLI runs the Supabase stack locally using Docker containers and applies the migrations and seed data.
+
+```sh
 npx supabase start
+```
 
-# 3. First time only, local only: create the env files
-#    web/.env.local gets the local API URL and publishable key (overwrites an existing file)
-(eval "$(npx supabase status -o env)" && printf 'VITE_SUPABASE_URL=%s\nVITE_SUPABASE_PUBLISHABLE_KEY=%s\nVITE_MAIN_SITE_URL=\n' "$API_URL" "$PUBLISHABLE_KEY" > web/.env.local)
-#    Or by hand: copy web/.env.example to web/.env.local and paste in the
-#    API_URL and PUBLISHABLE_KEY values from `npx supabase status -o env`.
+#### 3. Create the env files (first time only)
 
-#    supabase/functions/.env gets the local-only Edge Function secrets
-cp supabase/functions/.env.example supabase/functions/.env
+- Create `supabase/functions/.env` from [`supabase/functions/.env.example`](supabase/functions/.env.example). Its local-only values work as they are.
+- Create `web/.env.local` from [`web/.env.example`](web/.env.example), then run `npx supabase status` to see your local stack values. You need the following:
+  - `VITE_SUPABASE_URL`: **Project URL**
+  - `VITE_SUPABASE_PUBLISHABLE_KEY`: **Publishable**
 
-# 4. In a second terminal: serve the Edge Functions with those local-only secrets
+bash/zsh users can run: `(eval "$(npx supabase status -o env)" && printf 'VITE_SUPABASE_URL=%s\nVITE_SUPABASE_PUBLISHABLE_KEY=%s\nVITE_MAIN_SITE_URL=\n' "$API_URL" "$PUBLISHABLE_KEY" > web/.env.local)`. This writes the whole web .env file in one go.
+
+#### 4. Serve the Edge Functions
+
+In a second terminal:
+
+```sh
 npx supabase functions serve --env-file supabase/functions/.env
+```
 
-# 5. In a third terminal: start the web app
+#### 5. Start the web app
+
+In a third terminal:
+
+```sh
 npm run dev
 ```
 
-Open <http://localhost:5173>.
+Open <http://localhost:5173> to see the working app.
+
+For more details on development commands, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Try it locally
 
 ### Sign in and redeem a voucher
 
@@ -124,12 +144,27 @@ curl --request POST 'http://127.0.0.1:54321/functions/v1/issue-voucher' \
   --data "{\"organizationId\":\"a1000000-0000-0000-0000-000000000001\",\"serviceId\":\"a4000000-0000-0000-0000-000000000002\",\"expiresOn\":\"2099-12-31\",\"idempotencyKey\":\"$(node -p 'crypto.randomUUID()')\"}"
 ```
 
+On Windows (PowerShell):
+
+```powershell
+$body = @{
+  organizationId = 'a1000000-0000-0000-0000-000000000001'
+  serviceId      = 'a4000000-0000-0000-0000-000000000002'
+  expiresOn      = '2099-12-31'
+  idempotencyKey = [guid]::NewGuid().ToString()
+} | ConvertTo-Json
+
+Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:54321/functions/v1/issue-voucher' `
+  -Headers @{ 'X-Voucher-Issuer-Secret' = 'local-only-voucher-issuer-secret-do-not-deploy' } `
+  -ContentType 'application/json' -Body $body
+```
+
 The response holds the new `voucherId`. In Studio (<http://127.0.0.1:54323>):
 
 - Table Editor → `vouchers`: the row with that id has the `redemption_code` and the `qr_token`.
 - Storage → `generated-qrs` (a private bucket): `<voucherId>.png` is the voucher's QR code, which opens its service page. You can also, open the same page with the `qr_token` from the row: `http://localhost:5173/services/<service_id>?t=<qr_token>`.
 
-Now redeem it, by code or by QR, with the steps from the previous subsection. 
+Now redeem it, by code or by QR, with the steps from [Sign in and redeem a voucher](#sign-in-and-redeem-a-voucher).
 
 ## Contributing
 

@@ -33,6 +33,41 @@ To test redemption, sign in as staff and use one of these active vouchers. Each 
 
 **All seeded accounts are listed at the top of [`supabase/seeding/seed.sql`](supabase/seeding/seed.sql).**
 
+### Tests
+
+#### Edge Function unit tests
+
+The unit tests need Deno 2 but not the stack. Run them from `supabase/functions/`:
+
+```sh
+deno task test
+```
+
+#### Edge Function integration tests
+
+The integration tests run against the local stack. CI runs them on every push that touches the Edge Functions or the database ([ADR 0002](docs/adr/0002-integration-tests-on-ci-against-a-local-stack.md)).
+
+##### Run the integration tests locally
+
+1. Start the stack with `npx supabase start` and create `supabase/functions/.env` from [`supabase/functions/.env.example`](supabase/functions/.env.example).
+2. In a second terminal, serve the functions: `npx supabase functions serve --env-file supabase/functions/.env`.
+3. In a third terminal, set these environment variables. The first four come from `npx supabase status`, the last two from `supabase/functions/.env`:
+   - `SUPABASE_URL`: **Project URL**
+   - `SUPABASE_FUNCTIONS_URL`: **Edge Functions**
+   - `SUPABASE_PUBLISHABLE_KEY`: **Publishable**
+   - `SUPABASE_SECRET_KEY`: **Secret**
+   - `VOUCHER_ISSUER_SECRET` and `WEB_APP_URL`
+4. In the same terminal, run the tests from `supabase/functions/`: `deno task test:integration`.
+
+In bash or zsh, step 3 is:
+
+```sh
+eval "$(npx supabase status -o env)"
+export SUPABASE_URL="$API_URL" SUPABASE_FUNCTIONS_URL="$FUNCTIONS_URL" \
+  SUPABASE_PUBLISHABLE_KEY="$PUBLISHABLE_KEY" SUPABASE_SECRET_KEY="$SECRET_KEY"
+set -a; . supabase/functions/.env; set +a
+```
+
 ## Frontend
 
 For local development, `web/.env.local` holds:

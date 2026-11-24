@@ -54,6 +54,7 @@ Partners Hub automates the partner's side of this process. Partners and their st
 │   ├── tests/           # pgTAP database tests
 │   ├── functions/       # Edge Functions and their Deno tests
 │   └── seeding/         # Local seed data and service images
+├── e2e/                 # Playwright browser tests (own package.json and lockfile)
 ├── docs/                # Architecture decisions and database docs
 ├── .github/             # CI workflows and helper scripts
 └── package.json         # Pinned Supabase CLI and shared dev scripts

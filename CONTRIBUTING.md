@@ -68,6 +68,24 @@ export SUPABASE_URL="$API_URL" SUPABASE_FUNCTIONS_URL="$FUNCTIONS_URL" \
 set -a; . supabase/functions/.env; set +a
 ```
 
+#### End-to-end tests
+
+The Playwright tests in [`e2e/`](e2e) drive the web app in headless Chromium against the local stack. CI runs them on pull requests only. Each redeem test issues its own voucher through `issue-voucher`, so the tests can run again without resetting the database.
+
+##### Run the end-to-end tests locally
+
+1. Install the dependencies and the browser once: `npm install --prefix e2e` and `npx --prefix e2e playwright install chromium`.
+2. Start the stack, create `web/.env.local` (see [Frontend](#frontend)) and `supabase/functions/.env`, and serve the functions: `npx supabase functions serve --env-file supabase/functions/.env`.
+3. In a second terminal, set `SUPABASE_URL` and `SUPABASE_SECRET_KEY` from `npx supabase status`, and `VOUCHER_ISSUER_SECRET` from `supabase/functions/.env`:
+
+   ```sh
+   eval "$(npx supabase status -o env)"
+   export SUPABASE_URL="$API_URL" SUPABASE_SECRET_KEY="$SECRET_KEY"
+   set -a; . supabase/functions/.env; set +a
+   ```
+
+4. From the repository root, run `npm run test:e2e`. Playwright starts the web dev server, or reuses one already running on port 5173.
+
 ## Frontend
 
 For local development, `web/.env.local` holds:

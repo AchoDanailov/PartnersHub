@@ -7,6 +7,7 @@ Partners Hub is a local-first React and Supabase platform where our business par
 - `web/`: self-contained Vite frontend (React, Tailwind, React Router, TanStack Query) with its own dependencies and lockfile. The interface is in Bulgarian. Generated database types live in `web/src/types/database.ts`.
 - `supabase/`: local Supabase configuration, database migrations, pgTAP tests, and Edge Functions. Follow the `edge-functions` skill when writing or changing Edge Functions.
 - `supabase/seeding/`: local stack seeding, loaded after migrations by `npx supabase start` and `npx supabase db reset`. Not run in hosted supabase project. Every seeded user signs in with the local-only password `password123`. 
+- `e2e/`: Playwright browser tests of the web app against the local stack, with its own dependencies and lockfile. The E2E workflow runs them on pull requests only.
 - `docs/`: project documentation
 - `.github/`: GitHub Actions workflows and CI helper scripts (`.github/scripts/`). The Database and Edge Functions workflows run on every push to every branch. 
 - Root `package.json`: pinned Supabase CLI and shared development commands.
@@ -18,9 +19,12 @@ Run commands from the repository root:
 ```sh
 npm install
 npm install --prefix web
+npm install --prefix e2e
+npx --prefix e2e playwright install chromium
 npm run dev
 npm run build
 npm run lint
+npm run test:e2e   # needs the stack running, functions served and SUPABASE_* env exported (see CONTRIBUTING.md)
 
 npx supabase start
 npx supabase status
